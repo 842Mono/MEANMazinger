@@ -1,6 +1,12 @@
 var User = require('./Models/User');
 var Messages = require('./Models/Messages');
 
+var passport = require('passport');
+var LocalStrategy = require('passport-local').Strategy;
+var User = require('./Models/User');
+var jwt = require('jsonwebtoken');
+const config = require('./secret');
+
 let ControllerFunctions =
 {
   register:function(req,res)
@@ -25,8 +31,10 @@ let ControllerFunctions =
       partialUser.Email = req.body.Email;
 
     let newUser = new User(partialUser);
-    newUser.save
+    //newUser.save
+    User.createUser
     (
+      newUser,
       function(err,savedUser)
       {
         if(err)
@@ -45,6 +53,53 @@ let ControllerFunctions =
   login:function(req,res)
   {
 
+  },
+  authenticate:function(req, res)
+  {
+    let usernameIn = req.body.Username;
+    let passwordIn = req.body.Password;
+
+    User.findOne
+    (
+      {Username:usernameIn},
+      function(err, user)
+      {
+        if(err)
+          throw err;
+        if(!user)
+        {
+          res.status(401).json({ success: false, message: 'User not found.' });
+        }
+        else
+        {
+          // Check if password matches
+          user.comparePassword
+          (
+            passwordIn,
+            function(err, isMatch)
+            {
+              if(err)
+                console.log(err);
+              if(isMatch)
+              {
+                // Create token if the password matched and no error was thrown
+                const token = jwt.sign
+                (
+                  {un:user.Username},
+                  config.secret,
+                  {expiresIn: 10080} //in seconds
+                );
+                res.status(200).json({ success: true, token: 'JWT ' + token });
+              }
+              else
+              {
+                res.status(401).json({ success: false, message: 'Authentication failed. Passwords did not match.' });
+              }
+            }
+          );
+        }
+      }
+    );
   },
   sendMessage:function(req,res)
   {
