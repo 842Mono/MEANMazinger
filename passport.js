@@ -20,11 +20,11 @@ module.exports = function(passport)
       opts,
       function(jwt_payload, done)
       {
-        //console.log(jwt_payload);
-        const jwt_user_id = jwt_payload._doc._id;
-        User.findById
+        console.log(jwt_payload);
+        const jwtUsername = jwt_payload.un;
+        User.findOne
         (
-          jwt_user_id,
+          {Username:jwtUsername},
           function(err, user)
           {
             if(err)

@@ -9,6 +9,7 @@ const config = require('./secret');
 
 let ControllerFunctions =
 {
+  authorise:passport.authenticate('jwt', {session:false}),
   register:function(req,res)
   {
     //req.body.checkBody('firstName', 'FirstName is required').notEmpty();
@@ -103,7 +104,12 @@ let ControllerFunctions =
   },
   sendMessage:function(req,res)
   {
-    let Username = "serd usar"; //from session or passport
+    console.log(req.body.RecepientUsername + req.body.Content);
+    if(!req.body.RecepientUsername || !req.body.Content)
+      return res.json({success:false, msg:"Some input data missing"});
+
+    let Username = req.user.Username;
+    console.log(req.user);
 
     let RecepientUsername = req.body.RecepientUsername;
     let Message =
