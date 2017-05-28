@@ -13,7 +13,7 @@ var passport = require('passport');
   }
 );*/
 
-router.get('/a', function(req,res){res.send("backend works!")});
+router.get('/test', function(req,res){res.send("backend works!")});
 
 router.post('/register', controller.register);
 

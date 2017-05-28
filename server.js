@@ -6,6 +6,8 @@ var passport = require('passport');
 var LocalStrategy = require('passport-local').Strategy;
 var session = require('express-session');
 
+const http = require('http');
+
 var mazinger = express();
 mazinger.use(bodyParser.urlencoded({extended:false}));
 
@@ -14,11 +16,12 @@ mazinger.use(router);
 mazinger.use(passport.initialize());
 mazinger.use(passport.session());
 
-mazinger.use(express.static(__dirname + "/staticDir/"));
+mazinger.use(express.static(__dirname + "/staticDir/frontend/dist"));
 mazinger.use('/api', router);
 mazinger.get('*', (req, res) => {
-  res.sendFile(__dirname + "/staticDir/frontend/src/");
+  res.sendFile(__dirname + "/staticDir/frontend/dist/index.html");
 });
+const server = http.createServer(mazinger);
 
 
 var mongoose = require('mongoose');
