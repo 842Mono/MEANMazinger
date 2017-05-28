@@ -3,7 +3,17 @@ var router = express.Router();
 var controller = require('./controller');
 var passport = require('passport');
 
-router.get('/', function(req,res){console.log("mazinger sa7y!"); res.send("Mazinger Sa7y!!");});
+//router.get('/', function(req,res){console.log("mazinger sa7y!"); res.send("Mazinger Sa7y!!");});
+/*router.get
+(
+  '/',
+  function(req,res)
+  {
+    res.sendFile(__dirname + "/staticDir/index.htm");
+  }
+);*/
+
+router.get('/a', function(req,res){res.send("backend works!")});
 
 router.post('/register', controller.register);
 

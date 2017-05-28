@@ -1,1 +1,3 @@
 /node_modules/**
+/staticDir/frontend/node_modules/**
+/staticDir/manualFrontend/node_modules/**
