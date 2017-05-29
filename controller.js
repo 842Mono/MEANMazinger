@@ -109,6 +109,9 @@ let ControllerFunctions =
       {
         if(err)
           console.log(err);
+
+        //filter username of current user from req.use
+
         for(let i = 0; i < usersFound.length; ++i)
         {
           usersFound[i].Password = "";

@@ -3,35 +3,13 @@
 <head>
   <meta charset="UTF-8">
   <title>Direct Messaging</title>
-
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/meyer-reset/2.0/reset.min.css">
-
-
       <link rel="stylesheet" href="css/style.css">
-
-<!--script>
-$('.chat[data-chat=person2]').addClass('active-chat');
-$('.person[data-chat=person2]').addClass('active');
-
-$('.left .person').mousedown(function(){
-    if ($(this).hasClass('.active')) {
-        return false;
-    } else {
-        var findChat = $(this).attr('data-chat');
-        var personName = $(this).find('.name').text();
-        $('.right .top .name').html(personName);
-        $('.chat').removeClass('active-chat');
-        $('.left .person').removeClass('active');
-        $(this).addClass('active');
-        $('.chat[data-chat = '+findChat+']').addClass('active-chat');
-    }
-});
-</script-->
-
 </head>
-
 <body>
   <div class="wrapper">
+
+
     <div class="container">
         <div class="left">
             <div class="top">
@@ -57,16 +35,16 @@ $('.left .person').mousedown(function(){
                 <div class="conversation-start">
                     <span>Beginning</span>
                 </div>
-                <div *ngIf="activeConversation">
+                <div *ngIf="conversationFound">
                   <div *ngFor="let msg of activeConversation.Messages">
                     <div class="bubble" [class.you]="otherUser == msg.Sender" [class.me]="otherUser != msg.Sender">
                       {{msg.Content}}
                     </div>
                   </div>
                 </div>
-                <!--div class="bubble me">
-                  who we used to be.
-                </div-->
+                <div *ngIf="!conversationFound" class="conversation-start">
+                    <span>No Previous Conversation Found</span>
+                </div>
             </div>
             <div class="write">
                 <a href="javascript:;" class="write-link attach"></a>
@@ -76,10 +54,14 @@ $('.left .person').mousedown(function(){
             </div>
         </div>
     </div>
-</div>
-  <script src='http://cdnjs.cloudflare.com/ajax/libs/jquery/2.1.3/jquery.min.js'></script>
 
-    <script src="js/index.js"></script>
 
-</body>
-</html>
+
+
+    </div>
+      <script src='http://cdnjs.cloudflare.com/ajax/libs/jquery/2.1.3/jquery.min.js'></script>
+
+        <script src="js/index.js"></script>
+
+    </body>
+    </html>

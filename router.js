@@ -20,7 +20,7 @@ router.post('/register', controller.register);
 //router.post('/login', controller.login);
 
 //router.post('/sendmessage', controller.authorise, controller.sendMessage);
-router.post('/sendmessage',controller.sendMessage);
+router.post('/sendmessage', controller.sendMessage);
 
 router.post('/authenticate', controller.authenticate);
 

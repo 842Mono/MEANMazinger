@@ -19,6 +19,7 @@ export class ChatWindowComponent implements OnInit
 {
   users:any[] = [];
   activeConversation:any[] = [];
+  conversationFound:boolean;
   otherUser:string = "";
   newMessage:string = "";
 
@@ -33,7 +34,7 @@ export class ChatWindowComponent implements OnInit
         if(this.users.length > 0)
           this.fetchConversation(this.users[0].Username);
       },
-      err =>{console.log(err);}
+      err => {console.log(err);}
     );
     //then show messages from the first user
   }
@@ -65,7 +66,13 @@ export class ChatWindowComponent implements OnInit
         if(data.success)
         {
           this.activeConversation = data.conversation;
+          this.conversationFound = true;
           console.log(this.activeConversation);
+        }
+        else
+        {
+          this.activeConversation = [];
+          this.conversationFound = false;
         }
       },
       err => {console.log(err);}
@@ -84,7 +91,10 @@ export class ChatWindowComponent implements OnInit
       {
         console.log(resp);
         if(resp.success)
+        {
           this.activeConversation = resp.newConversation;
+          this.conversationFound = true;
+        }
       },
       err => {console.log(err);}
     );

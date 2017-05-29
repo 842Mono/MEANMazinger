@@ -6,6 +6,7 @@ import { HttpModule } from '@angular/http';
 import { AppComponent } from './app.component';
 import { ChatWindowComponent } from './chat-window/chat-window.component';
 import {BackendServiceService} from './backend-service/backend-service.service';
+import { AuthComponent } from './auth/auth.component';
 
 @NgModule
 (
@@ -13,7 +14,8 @@ import {BackendServiceService} from './backend-service/backend-service.service';
     declarations:
     [
       AppComponent,
-      ChatWindowComponent
+      ChatWindowComponent,
+      AuthComponent
     ],
     imports:
     [
