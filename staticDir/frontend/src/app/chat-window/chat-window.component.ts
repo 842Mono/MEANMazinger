@@ -18,6 +18,8 @@ declare var Tagify:any;
 export class ChatWindowComponent implements OnInit
 {
   users:any[];
+  activeConversation:any[];
+  otherUser:string;
 
   //constructor(private elementRef:ElementRef)
   constructor(private bes:BackendServiceService)
@@ -35,6 +37,24 @@ export class ChatWindowComponent implements OnInit
       {
         this.users = data.Users;
         console.log(this.users);
+      },
+      err =>{console.log(err);}
+    );
+  }
+
+  fetchConversation(requiredUsername:string)
+  {
+    console.log(requiredUsername);
+    this.bes.getConversation(requiredUsername).subscribe
+    (
+      data =>
+      {
+        console.log(data);
+        if(data.success)
+        {
+          this.activeConversation = data.conversation;
+          console.log(this.activeConversation);
+        }
       },
       err =>{console.log(err);}
     );

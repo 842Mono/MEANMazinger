@@ -39,17 +39,15 @@ $('.left .person').mousedown(function(){
                 <a href="javascript:;" class="search"></a>
             </div>
             <ul class="people">
-                <li class="person" data-chat="person1">
-                    <img src="https://s13.postimg.org/ih41k9tqr/img1.jpg" alt="" />
-                    <span class="name">Thomas Bangalter</span>
-                    <span class="time">2:09 PM</span>
-                    <span class="preview">I was wondering...</span>
-                </li>
-                <li class="person" data-chat="person2">
+                <li *ngFor="let user of users; let i = index" class="person" data-chat="person1">
+                  <div (click)="fetchConversation(user.Username)">
                     <img src="https://s3.postimg.org/yf86x7z1r/img2.jpg" alt="" />
-                    <span class="name">Dog Woofson</span>
-                    <span class="time">1:44 PM</span>
-                    <span class="preview">I've forgotten how it felt before</span>
+                    <span class="name">{{user.Username}}</span>
+                    <span *ngIf="user.Online" class="time">Online</span>
+                    <span *ngIf="user.FirstName" class="preview">{{user.FirstName}}</span>
+                    <span *ngIf="user.MiddleName" class="preview">{{user.MiddleName}}</span>
+                    <span *ngIf="user.Email" class="preview">{{user.Email}}</span>
+                  </div>
                 </li>
             </ul>
         </div>
@@ -57,17 +55,18 @@ $('.left .person').mousedown(function(){
             <div class="top"><span>To: <span class="name">Dog Woofson</span></span></div>
             <div class="chat active-chat" data-chat="person1">
                 <div class="conversation-start">
-                    <span>Today, 6:48 AM</span>
+                    <span>Beginning</span>
                 </div>
-                <div class="bubble you">
-                    Hello,
+                <div *ngIf="activeConversation">
+                  <div *ngFor="let msg of activeConversation.Messages">
+                    <div  class="bubble you">
+                      {{msg.Content}}
+                    </div>
+                  </div>
                 </div>
-                <div class="bubble you">
-                    it's me.
-                </div>
-                <div class="bubble you">
-                    I was wondering...
-                </div>
+                <!--div class="bubble me">
+                  who we used to be.
+                </div-->
             </div>
             <div class="write">
                 <a href="javascript:;" class="write-link attach"></a>

@@ -25,8 +25,12 @@ var MessagesSchema = mongoose.Schema
         {
           type:String,
           required:true
+        },
+        Sender:
+        {
+          type:String,
+          required:true
         }
-        //add sender :c
       }
     ]
   }

@@ -117,20 +117,41 @@ let ControllerFunctions =
       }
     );
   },
+  fetchConversation:function(req,res)
+  {
+    console.log(req.body);
+    if(!req.body.requiredUsername)
+      return res.json({success:false, msg:"No Required Username"});
+    let requesterUsername = "u1"; //req.user.Username;
+    let requiredUsername = req.body.requiredUsername;
+
+    Messages.findOne
+    (
+      {$or:[{Username1:requesterUsername, Username2:requiredUsername},{Username1:requiredUsername, Username2:requesterUsername}]},
+      function(err,conversation)
+      {
+        if(err)
+          console.log(err);
+        if(!conversation)
+          return res.json({success:false, msg:"Conversation Not Found"});
+        else
+        {
+          res.json({success:true, conversation:conversation});
+        }
+      }
+    );
+  },
   sendMessage:function(req,res)
   {
-    console.log(req.body.RecepientUsername + req.body.Content);
     if(!req.body.RecepientUsername || !req.body.Content)
       return res.json({success:false, msg:"Some input data missing"});
-
-    let Username = req.user.Username;
-    console.log(req.user);
-
+    let Username = "u1"; //req.user.Username;
     let RecepientUsername = req.body.RecepientUsername;
     let Message =
     {
       Timestamp:new Date(),
-      Content:req.body.Content
+      Content:req.body.Content,
+      Sender:Username
     };
 
     Messages.findOne

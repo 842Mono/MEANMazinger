@@ -10,6 +10,7 @@ var cors = require('cors');
 const http = require('http');
 
 var mazinger = express();
+mazinger.use(bodyParser.json()); //TELL DAVID
 mazinger.use(bodyParser.urlencoded({extended:false}));
 
 mazinger.use(morgan('dev'));
