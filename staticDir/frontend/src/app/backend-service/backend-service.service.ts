@@ -30,6 +30,16 @@ export class BackendServiceService
     return this.http.post(ep, { requiredUsername: requiredUsername }, { headers: headers }).map(res => res.json());
   }
 
+  sendMessage(message, otherUser)
+  {
+    let headers = new Headers();
+    //this.loadToken();
+    //headers.append('Authorization', this.authToken);
+    headers.append('Content-Type', 'application/json');
+    let ep = this.prepEndpoint('sendmessage');
+    return this.http.post(ep, { Content:message, RecepientUsername:otherUser }, { headers: headers }).map(res => res.json());
+  }
+
   loadToken()
   {
     const token = localStorage.getItem('id_token');

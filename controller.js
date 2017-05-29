@@ -182,7 +182,7 @@ let ControllerFunctions =
                 return res.json({success:false, msg:"Failed To Save New Conversation."});
               }
               else
-                return res.json({success:true, msg:"New Conversation Saved Successfully."});
+                return res.json({success:true, msg:"New Conversation Saved Successfully.", newConversation:savedConversation});
               //
             }
           );
@@ -200,7 +200,7 @@ let ControllerFunctions =
                 return res.json({success:false, msg:"Failed To Save Message."});
               }
               else
-                return res.json({success:true, msg:"Message Saved Successfully."});
+                return res.json({success:true, msg:"Message Saved Successfully.", newConversation:savedConversation});
               //
             }
           );

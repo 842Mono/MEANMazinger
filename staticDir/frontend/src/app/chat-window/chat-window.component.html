@@ -59,7 +59,7 @@ $('.left .person').mousedown(function(){
                 </div>
                 <div *ngIf="activeConversation">
                   <div *ngFor="let msg of activeConversation.Messages">
-                    <div  class="bubble you">
+                    <div class="bubble" [class.you]="otherUser == msg.Sender" [class.me]="otherUser != msg.Sender">
                       {{msg.Content}}
                     </div>
                   </div>
@@ -70,7 +70,7 @@ $('.left .person').mousedown(function(){
             </div>
             <div class="write">
                 <a href="javascript:;" class="write-link attach"></a>
-                <input type="text" />
+                <input type="text" [(ngModel)]="newMessage" (keydown.enter)="sendMessage()"/>
                 <a href="javascript:;" class="write-link smiley"></a>
                 <a href="javascript:;" class="write-link send"></a>
             </div>

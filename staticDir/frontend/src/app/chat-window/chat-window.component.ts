@@ -17,14 +17,25 @@ declare var Tagify:any;
 )
 export class ChatWindowComponent implements OnInit
 {
-  users:any[];
-  activeConversation:any[];
-  otherUser:string;
+  users:any[] = [];
+  activeConversation:any[] = [];
+  otherUser:string = "";
+  newMessage:string = "";
 
   //constructor(private elementRef:ElementRef)
   constructor(private bes:BackendServiceService)
   {
-    this.showAllUsers();
+    this.bes.getAllUsers().subscribe
+    (
+      data =>
+      {
+        this.users = data.Users;
+        if(this.users.length > 0)
+          this.fetchConversation(this.users[0].Username);
+      },
+      err =>{console.log(err);}
+    );
+    //then show messages from the first user
   }
 
   ngOnInit(){}
@@ -44,6 +55,7 @@ export class ChatWindowComponent implements OnInit
 
   fetchConversation(requiredUsername:string)
   {
+    this.otherUser = requiredUsername;
     console.log(requiredUsername);
     this.bes.getConversation(requiredUsername).subscribe
     (
@@ -56,17 +68,25 @@ export class ChatWindowComponent implements OnInit
           console.log(this.activeConversation);
         }
       },
-      err =>{console.log(err);}
+      err => {console.log(err);}
     );
   }
 
-  /*sendMessage()
+  sendMessage()
   {
-    let headers = new Headers();
-    this.loadToken();
-    headers.append('Authorization', this.authToken);
-    headers.append('Content-Type', 'application/json');
-    let ep = this.prepEndpoint('CommentActivity');
-    return this.http.post(ep, { "activityId": ID, "comment": comment }, { headers: headers }).map(res => res.json());
-  }*/
+    console.log(this.newMessage);
+    let message = this.newMessage;
+    this.newMessage = "";
+    //push message
+    this.bes.sendMessage(message, this.otherUser).subscribe
+    (
+      resp =>
+      {
+        console.log(resp);
+        if(resp.success)
+          this.activeConversation = resp.newConversation;
+      },
+      err => {console.log(err);}
+    );
+  }
 }
