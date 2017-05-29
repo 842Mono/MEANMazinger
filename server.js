@@ -5,6 +5,7 @@ var morgan = require('morgan');
 var passport = require('passport');
 var LocalStrategy = require('passport-local').Strategy;
 var session = require('express-session');
+var cors = require('cors');
 
 const http = require('http');
 
@@ -17,11 +18,14 @@ mazinger.use(passport.initialize());
 mazinger.use(passport.session());
 
 mazinger.use(express.static(__dirname + "/staticDir/frontend/dist"));
+
+//mazinger.all('/*', function(req, res, next) {res.header("Access-Control-Allow-Origin", "*"); res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept"); next();});
+
 mazinger.use('/api', router);
-mazinger.get('*', (req, res) => {
-  res.sendFile(__dirname + "/staticDir/frontend/dist/index.html");
-});
+mazinger.get('*', (req, res) => {res.sendFile(__dirname + "/staticDir/frontend/dist/index.html");});
 const server = http.createServer(mazinger);
+mazinger.use(cors());
+
 
 
 var mongoose = require('mongoose');

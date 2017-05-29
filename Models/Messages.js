@@ -26,6 +26,7 @@ var MessagesSchema = mongoose.Schema
           type:String,
           required:true
         }
+        //add sender :c
       }
     ]
   }

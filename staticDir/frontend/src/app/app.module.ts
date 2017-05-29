@@ -5,18 +5,24 @@ import { HttpModule } from '@angular/http';
 
 import { AppComponent } from './app.component';
 import { ChatWindowComponent } from './chat-window/chat-window.component';
+import {BackendServiceService} from './backend-service/backend-service.service';
 
-@NgModule({
-  declarations: [
-    AppComponent,
-    ChatWindowComponent
-  ],
-  imports: [
-    BrowserModule,
-    FormsModule,
-    HttpModule
-  ],
-  providers: [],
-  bootstrap: [AppComponent]
-})
+@NgModule
+(
+  {
+    declarations:
+    [
+      AppComponent,
+      ChatWindowComponent
+    ],
+    imports:
+    [
+      BrowserModule,
+      FormsModule,
+      HttpModule
+    ],
+    providers: [BackendServiceService],
+    bootstrap: [AppComponent]
+  }
+)
 export class AppModule { }

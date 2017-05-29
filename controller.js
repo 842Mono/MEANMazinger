@@ -14,7 +14,7 @@ let ControllerFunctions =
   {
     //req.body.checkBody('firstName', 'FirstName is required').notEmpty();
     //req.body.checkBody('firstName', 'FirstName is required').notEmpty();
-    console.log(req);
+    //console.log(req);
     if(!req.body.Username || !req.body.Password)
       return res.json({success:false, msg:"Missing Required Inputs"});
 
@@ -51,10 +51,7 @@ let ControllerFunctions =
       }
     );
   },
-  login:function(req,res)
-  {
-
-  },
+  login:function(req,res){},
   authenticate:function(req, res)
   {
     let usernameIn = req.body.Username;
@@ -90,6 +87,7 @@ let ControllerFunctions =
                   config.secret,
                   {expiresIn: 10080} //in seconds
                 );
+                //make Online = true;
                 res.status(200).json({ success: true, token: 'JWT ' + token });
               }
               else
@@ -99,6 +97,23 @@ let ControllerFunctions =
             }
           );
         }
+      }
+    );
+  },
+  getAllUsers(req,res)
+  {
+    User.find
+    (
+      {},
+      function(err,usersFound)
+      {
+        if(err)
+          console.log(err);
+        for(let i = 0; i < usersFound.length; ++i)
+        {
+          usersFound[i].Password = "";
+        }
+        res.json({success:true, Users:usersFound});
       }
     );
   },
