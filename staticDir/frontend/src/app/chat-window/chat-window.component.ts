@@ -1,5 +1,6 @@
 import { Component, OnInit, ElementRef } from '@angular/core';
 import {BackendServiceService} from '../backend-service/backend-service.service';
+import * as io from 'socket.io-client';
 
 declare var Tagify:any;
 
@@ -19,20 +20,44 @@ export class ChatWindowComponent implements OnInit
 {
   users:any[] = [];
   activeConversation:any[] = [];
-  conversationFound:boolean;
   otherUser:string = "";
+  conversationFound:boolean;
   newMessage:string = "";
-  loginSwitch:boolean;
+  //loginSwitch:boolean;
+
+  socket = null;
+  socketio = null;
+  //socket: SocketIOClient.Socket;
+
+  //filteredList:any[] = [];
+
 
   //constructor(private elementRef:ElementRef)
   constructor(private bes:BackendServiceService)
   {
+    //this.socket = io(bes.backendPoint);
+    //this.socket = io.connect(bes.backendSocket);
 
+
+    console.log(bes.backendSocket);
+    this.socketio = io(bes.backendSocket);
+    this.socketio.on('changeGetAllUsers', (data) => {console.log("Need to change Users!"); if(bes.loginSwitch) this.showAllUsers(); });
+    this.socketio.on('changeConversation', (data) => {this.onMessageReceived(data);});
+    //this.socketio.on('connect',function(){this.socketio.emit('authenticated', { Username:this.bes.thisUser });});
+  }
+
+  onMessageReceived(eventData)
+  {
+    console.log("delta conv!");
+    if(eventData.sender == this.otherUser)
+      this.fetchConversation(this.otherUser);
   }
 
   onLoggedIn(event)
   {
     console.log(event);
+
+    this.socketio.emit('authenticated', { Username:this.bes.thisUser });
 
     this.bes.getAllUsers().subscribe
     (
@@ -102,6 +127,7 @@ export class ChatWindowComponent implements OnInit
         {
           this.activeConversation = resp.newConversation;
           this.conversationFound = true;
+          this.socketio.emit('changeNewMessage', { recepient:this.otherUser, sender:this.bes.thisUser });
         }
       },
       err => {console.log(err);}

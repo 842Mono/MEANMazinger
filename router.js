@@ -26,7 +26,7 @@ router.post('/authenticate', controller.authenticate);
 
 router.get('/getallusers', controller.authorise, controller.getAllUsers);
 
-router.post('/fetchconversation', controller.authorise, controller.fetchConversation); //auth
+router.post('/fetchconversation', controller.authorise, controller.fetchConversation);
 
 //router.get('/');
 

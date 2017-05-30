@@ -23,32 +23,38 @@
     <div class="container" *ngIf="bes.loginSwitch">
         <div class="left" style="overflow-y: scroll; overflow-x: hidden;">
             <div class="top">
-                <input type="text" />
-                <a href="javascript:;" class="search"></a> <!--move it from here-->
+                <h1 style="font-size: 30px; text-align: center;">Users</h1>
+                <!--input type="text" /-->
+                <!--a href="javascript:;" class="search"></a-->
             </div>
             <ul class="people">
-                <li *ngFor="let user of users; let i = index" class="person" data-chat="person1">
-                  <div (click)="fetchConversation(user.Username)">
+              <div *ngFor="let user of users; let i = index">
+                <li (click)="fetchConversation(user.Username)" class="person" data-chat="person1">
+                  <div>
                     <img src="https://s3.postimg.org/yf86x7z1r/img2.jpg" alt="" />
                     <span class="name">{{user.Username}}</span>
-                    <span *ngIf="user.Online" class="time">Online</span>
+                    <span *ngIf="user.Online" class="time" style="color:green;">Online</span>
+                    <span *ngIf="!user.Online" class="time" style="color:red;">Offline</span>
                     <span *ngIf="user.FirstName" class="preview">{{user.FirstName}}</span>
                     <span *ngIf="user.MiddleName" class="preview">{{user.MiddleName}}</span>
                     <span *ngIf="user.Email" class="preview">{{user.Email}}</span>
                   </div>
                 </li>
+              </div>
             </ul>
         </div>
         <div class="right">
             <div class="top"><span>To: <span class="name">{{otherUser}}</span></span></div>
-            <div class="chat active-chat" style="overflow-y: scroll; overflow-x: hidden;" data-chat="person1">
+            <div class="chat active-chat" data-chat="person1">
                 <div class="conversation-start">
-                    <span>Beginning</span>
+                    <span>Chat</span>
                 </div>
-                <div *ngIf="conversationFound">
-                  <div *ngFor="let msg of activeConversation.Messages"> <!--add padding to the right-->
-                    <div class="bubble" [class.you]="otherUser == msg.Sender" [class.me]="otherUser != msg.Sender">
-                      {{msg.Content}}
+                <div style="overflow-y: scroll; overflow-x: hidden;">
+                  <div *ngIf="conversationFound" style="padding-right:15px;">
+                    <div *ngFor="let msg of activeConversation.Messages"> <!--add padding to the right-->
+                      <div class="bubble" [class.you]="otherUser == msg.Sender" [class.me]="otherUser != msg.Sender">
+                        {{msg.Content}}
+                      </div>
                     </div>
                   </div>
                 </div>

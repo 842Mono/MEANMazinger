@@ -9,6 +9,9 @@ export class BackendServiceService
   thisUser:string;
   loginSwitch:boolean;
 
+  backendSocket:string = "http://localhost:5100";
+  backendPoint:string = "http://localhost:5001/api/";
+
   constructor(private http: Http){}
 
   newSubscribtion(data)
@@ -65,6 +68,6 @@ export class BackendServiceService
 
   prepEndpoint(ep)
   {
-    return 'http://localhost:5001/api/' + ep;
+    return this.backendPoint + ep;
   }
 }

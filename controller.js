@@ -102,6 +102,8 @@ let ControllerFunctions =
   },
   getAllUsers(req,res)
   {
+    let Username = req.user.Username;
+
     User.find
     (
       {},
@@ -110,13 +112,20 @@ let ControllerFunctions =
         if(err)
           console.log(err);
 
-        //filter username of current user from req.use
-
         for(let i = 0; i < usersFound.length; ++i)
         {
           usersFound[i].Password = "";
         }
-        res.json({success:true, Users:usersFound});
+
+        let filteredUsers = usersFound.filter
+        (
+          function(userElement)
+          {
+            return userElement.Username != Username;
+          }
+        );
+
+        res.json({success:true, Users:filteredUsers});
       }
     );
   },
@@ -209,6 +218,25 @@ let ControllerFunctions =
           );
         }
       }
+    );
+  },
+  socketUpdateOnline:function(user,status,next)
+  {
+    User.update
+    (
+      { Username:user },
+      { $set: { Online:status }},
+      next
+    );
+  },
+  initClearOnline:function()
+  {
+    User.update
+    (
+      {Online:true},
+      { $set: { Online:false }},
+      {multi: true},
+      function(err,obj){console.log(obj);}
     );
   }
 }
