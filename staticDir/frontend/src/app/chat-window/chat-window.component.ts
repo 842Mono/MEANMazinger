@@ -22,6 +22,7 @@ export class ChatWindowComponent implements OnInit
   conversationFound:boolean;
   otherUser:string = "";
   newMessage:string = "";
+  loginSwitch:boolean;
 
   //constructor(private elementRef:ElementRef)
   constructor(private bes:BackendServiceService)

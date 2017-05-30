@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html >
+<html>
 <head>
   <meta charset="UTF-8">
   <title>Direct Messaging</title>
@@ -9,8 +9,18 @@
 <body>
   <div class="wrapper">
 
+    <div *ngIf="!loginSwitch">
+      <div style="margin: 0 auto; vertical-align: top; padding-top: 80px;">
+        <div style="width: 50%; float:left;">
+          <app-auth></app-auth>
+        </div>
+        <div style="width: 50%; float:right;">
+          <app-signup></app-signup>
+        </div>
+      </div>
+    </div>
 
-    <div class="container">
+    <div class="container" *ngIf="loginSwitch">
         <div class="left">
             <div class="top">
                 <input type="text" />

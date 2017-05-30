@@ -1,11 +1,27 @@
+<strong><h1 style="color:white; text-align: center; font-size:30px">Chat On!</h1></strong>
+<br/>
+<br/>
 
-<div *ngIf="test" id="bg"></div>
-<form *ngIf="test" action="">
-  <label for=""></label>
-  <input type="text" name="" id="" placeholder="email" class="email">
-
-  <label for=""></label>
-  <input type="password" name="" id="" placeholder="password" class="pass">
+<div *ngIf="false" id="bg"></div>
+<form (submit)="login()">
+  <input type="text" [(ngModel)]="username" name="username" id="" placeholder="Username" class="email">
+  <input type="password" [(ngModel)]="password" name="password" id="" placeholder="password" class="pass">
 
   <button type="submit">login to your account</button>
 </form>
+
+<div *ngIf="loading1">
+  <div class="loading1">
+    <div class="loading2">
+      <div class="sk-double-bounce">
+        <div class="sk-child sk-double-bounce1"></div>
+        <div class="sk-child sk-double-bounce2"></div>
+      </div>
+      <p class="loading3">Please Wait...</p>
+    </div>
+  </div>
+</div>
+
+<br/>
+<br/>
+<strong *ngIf="miniFlashMessage"><h1 style="color:white; text-align: center; font-size:30px">{{miniFlashMessageText}}</h1></strong>

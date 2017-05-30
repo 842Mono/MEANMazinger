@@ -10,6 +10,22 @@ export class BackendServiceService
 
   constructor(private http: Http){}
 
+  newSubscribtion(data)
+  {
+    let headers = new Headers();
+    headers.append('Content-Type', 'application/json');
+    let ep = this.prepEndpoint('register');
+    return this.http.post(ep, data, { headers: headers }).map(res => res.json());
+  }
+
+  authenticate(usernameIn, passwordIn)
+  {
+    let headers = new Headers();
+    headers.append('Content-Type', 'application/json');
+    let ep = this.prepEndpoint('authenticate');
+    return this.http.post(ep, {Username:usernameIn, Password:passwordIn}, { headers: headers }).map(res => res.json());
+  }
+
   getAllUsers()
   {
     let headers = new Headers();

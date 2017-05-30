@@ -5,8 +5,9 @@ import { HttpModule } from '@angular/http';
 
 import { AppComponent } from './app.component';
 import { ChatWindowComponent } from './chat-window/chat-window.component';
-import {BackendServiceService} from './backend-service/backend-service.service';
+import { BackendServiceService } from './backend-service/backend-service.service';
 import { AuthComponent } from './auth/auth.component';
+import { SignupComponent } from './signup/signup.component';
 
 @NgModule
 (
@@ -15,7 +16,8 @@ import { AuthComponent } from './auth/auth.component';
     [
       AppComponent,
       ChatWindowComponent,
-      AuthComponent
+      AuthComponent,
+      SignupComponent
     ],
     imports:
     [
@@ -24,7 +26,7 @@ import { AuthComponent } from './auth/auth.component';
       HttpModule
     ],
     providers: [BackendServiceService],
-    bootstrap: [AppComponent]
+    bootstrap: [ChatWindowComponent]
   }
 )
 export class AppModule { }

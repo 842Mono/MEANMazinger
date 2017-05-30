@@ -41,7 +41,7 @@ let ControllerFunctions =
         if(err)
         {
           console.log(err);
-          return res.json({success:false, msg:"Error Saving User."});
+          return res.json({success:false, msg:"Error Saving User. Please Try Again"});
         }
         else
         {
@@ -66,7 +66,7 @@ let ControllerFunctions =
           throw err;
         if(!user)
         {
-          res.status(401).json({ success: false, message: 'User not found.' });
+          res.status(401).json({ success: false, msg: 'User not found.' });
         }
         else
         {
@@ -92,7 +92,7 @@ let ControllerFunctions =
               }
               else
               {
-                res.status(401).json({ success: false, message: 'Authentication failed. Passwords did not match.' });
+                res.status(401).json({ success: false, msg: 'Authentication failed. Passwords did not match.'});
               }
             }
           );

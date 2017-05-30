@@ -1,0 +1,38 @@
+<strong><h1 style="color:white; text-align: center; font-size:30px">New Here?</h1></strong>
+<strong><h1 style="color:white; text-align: center; font-size:30px">Register An Account!</h1></strong>
+<br/>
+<br/>
+
+<div *ngIf="false" id="bg"></div>
+<form (submit)="signup()">
+  <input required type="text" [(ngModel)]="username" name="username" id="" placeholder="username*" class="email">
+  <input required type="password" [(ngModel)]="password" name="password" id="" placeholder="password*" class="pass">
+  <label for="" style="color:white;">more informaiton...</label>
+  <br/>
+  <br/>
+  <input type="text" [(ngModel)]="firstName" name="firstName" id="" placeholder="First Name" class="email">
+  <input type="text" [(ngModel)]="middleName" name="middleName" id="" placeholder="Middle Name" class="email">
+  <input type="text" [(ngModel)]="lastName" name="lastName" id="" placeholder="Last Name" class="email">
+  <input type="date" [(ngModel)]="dateOfBirth" name="dateOfBirth" id="" placeholder="Date Of Birth" class="email">
+  <input type="email" [(ngModel)]="email" name="email" id="" placeholder="Email" class="email">
+  <button type="submit">Signup!</button>
+  <br/>
+  <br/>
+  <label for="" style="color:white;">*Required</label>
+</form>
+
+<div *ngIf="loading1">
+  <div class="loading1">
+    <div class="loading2">
+      <div class="sk-double-bounce">
+        <div class="sk-child sk-double-bounce1"></div>
+        <div class="sk-child sk-double-bounce2"></div>
+      </div>
+      <p class="loading3">Registering New Account...</p>
+    </div>
+  </div>
+</div>
+
+<br/>
+<br/>
+<strong *ngIf="miniFlashMessage"><h1 style="color:white; text-align: center; font-size:30px">{{miniFlashMessageText}}</h1></strong>
