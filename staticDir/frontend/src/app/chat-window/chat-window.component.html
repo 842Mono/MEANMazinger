@@ -34,9 +34,9 @@
                     <img src="https://s3.postimg.org/yf86x7z1r/img2.jpg" alt="" />
                     <span class="name">{{user.Username}}</span>
                     <span *ngIf="user.Online" class="time" style="color:green;">Online</span>
-                    <span *ngIf="!user.Online" class="time" style="color:red;">Offline</span>
-                    <span *ngIf="user.FirstName" class="preview">{{user.FirstName}}</span>
-                    <span *ngIf="user.MiddleName" class="preview">{{user.MiddleName}}</span>
+                    <span *ngIf="!user.Online" class="time" style="color:red;">Offline</span><br/>
+                    <span *ngIf="user.FirstName || user.MiddleName || user.LastName" class="preview">{{user.FirstName}} {{user.MiddleName}} {{user.LastName}}</span><br/>
+                    <!--span *ngIf="user.MiddleName" class="preview">{{user.MiddleName}}</span-->
                     <span *ngIf="user.Email" class="preview">{{user.Email}}</span>
                   </div>
                 </li>
@@ -44,7 +44,7 @@
             </ul>
         </div>
         <div class="right">
-            <div class="top"><span>To: <span class="name">{{otherUser}}</span></span></div>
+            <div class="top"><span>To:    <span class="name">{{otherUser}}</span></span></div>
             <div class="chat active-chat" data-chat="person1">
                 <div class="conversation-start">
                     <span>Chat</span>
@@ -63,10 +63,10 @@
                 </div>
             </div>
             <div class="write">
-                <a href="javascript:;" class="write-link attach"></a>
+                <!--a href="javascript:;" class="write-link attach"></a-->
                 <input type="text" [(ngModel)]="newMessage" (keydown.enter)="sendMessage()"/>
-                <a href="javascript:;" class="write-link smiley"></a>
-                <a href="javascript:;" class="write-link send"></a>
+                <!--a href="javascript:;" class="write-link smiley"></a-->
+                <!--a href="javascript:;" class="write-link send"></a-->
             </div>
         </div>
     </div>

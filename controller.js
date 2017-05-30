@@ -23,7 +23,7 @@ let ControllerFunctions =
     if(req.body.FirstName)
       partialUser.FirstName = req.body.FirstName;
     if(req.body.MiddleName)
-      partialUser.MiddleName = req.body.body.MiddleName;
+      partialUser.MiddleName = req.body.MiddleName;
     if(req.body.LastName)
       partialUser.LastName = req.body.LastName;
     if(req.body.DateOfBirth)
