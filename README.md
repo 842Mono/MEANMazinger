@@ -1,4 +1,4 @@
-## Simple Meeting Point For A Small Group ##
+## Simple Messenger For A Small Group ##
 
 ## Features ##
  - Simple profile construction (signup)
