@@ -39,6 +39,8 @@ also install `sudo apt install build-essential libssl-dev`
 
 ...to check do `node --version` and `npm --version`
 
+after that install angular-cli globaly `npm install -g @angular/cli` (we'll need it later)
+
 Installing mongodb
 
 Add their key `sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv EA312927`
