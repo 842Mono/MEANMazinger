@@ -125,7 +125,7 @@ let ControllerFunctions =
     console.log(req.body);
     if(!req.body.requiredUsername)
       return res.json({success:false, msg:"No Required Username"});
-    let requesterUsername = "u1"; //req.user.Username;
+    let requesterUsername = req.user.Username; //"u1"; //req.user.Username;
     let requiredUsername = req.body.requiredUsername;
 
     Messages.findOne
@@ -148,7 +148,7 @@ let ControllerFunctions =
   {
     if(!req.body.RecepientUsername || !req.body.Content)
       return res.json({success:false, msg:"Some input data missing"});
-    let Username = "u1"; //req.user.Username;
+    let Username = req.user.Username; //"u1"; //req.user.Username;
     let RecepientUsername = req.body.RecepientUsername;
     let Message =
     {

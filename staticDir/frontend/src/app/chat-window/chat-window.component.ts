@@ -27,6 +27,13 @@ export class ChatWindowComponent implements OnInit
   //constructor(private elementRef:ElementRef)
   constructor(private bes:BackendServiceService)
   {
+
+  }
+
+  onLoggedIn(event)
+  {
+    console.log(event);
+
     this.bes.getAllUsers().subscribe
     (
       data =>

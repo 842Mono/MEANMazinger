@@ -5,8 +5,9 @@ import 'rxjs/add/operator/map';
 @Injectable()
 export class BackendServiceService
 {
-  authToken:any;
+  authToken:string;
   thisUser:string;
+  loginSwitch:boolean;
 
   constructor(private http: Http){}
 
@@ -30,7 +31,7 @@ export class BackendServiceService
   {
     let headers = new Headers();
     //this.loadToken();
-    //headers.append('Authorization', this.authToken);
+    headers.append('Authorization', this.authToken);
     headers.append('Content-Type', 'application/json');
     let ep = this.prepEndpoint('getallusers');
     return this.http.get(ep, { headers: headers }).map(res => res.json());
@@ -40,7 +41,7 @@ export class BackendServiceService
   {
     let headers = new Headers();
     //this.loadToken();
-    //headers.append('Authorization', this.authToken);
+    headers.append('Authorization', this.authToken);
     headers.append('Content-Type', 'application/json');
     let ep = this.prepEndpoint('fetchconversation');
     return this.http.post(ep, { requiredUsername: requiredUsername }, { headers: headers }).map(res => res.json());
@@ -50,7 +51,7 @@ export class BackendServiceService
   {
     let headers = new Headers();
     //this.loadToken();
-    //headers.append('Authorization', this.authToken);
+    headers.append('Authorization', this.authToken);
     headers.append('Content-Type', 'application/json');
     let ep = this.prepEndpoint('sendmessage');
     return this.http.post(ep, { Content:message, RecepientUsername:otherUser }, { headers: headers }).map(res => res.json());

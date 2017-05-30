@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, Output, EventEmitter } from '@angular/core';
 import {BackendServiceService} from '../backend-service/backend-service.service';
 
 @Component
@@ -18,6 +18,8 @@ export class AuthComponent implements OnInit
 
   username:string = "";
   password:string = "";
+
+  @Output() getUsers:EventEmitter<string> = new EventEmitter();
 
   constructor(private bes:BackendServiceService){}
 
@@ -42,7 +44,20 @@ export class AuthComponent implements OnInit
         this.loading1 = false;
         if(resp.success)
         {
+          //localStorage.setItem('authToken', resp.token);
+          //localStorage.setItem('thisUser', this.username);
+          this.bes.authToken = resp.token;
+          this.bes.thisUser = this.username;
+          console.log("////////////");
+          console.log(localStorage.getItem('authToken'));
+          console.log(localStorage.getItem('thisUser'));
+          console.log(this.bes.authToken);
+          console.log(this.bes.thisUser);
+          console.log("////////////");
 
+          this.getUsers.emit('complete');
+
+          this.bes.loginSwitch = true;
         }//save token and flip the switch :)
         else
         {

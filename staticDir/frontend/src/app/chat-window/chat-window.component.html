@@ -9,10 +9,10 @@
 <body>
   <div class="wrapper">
 
-    <div *ngIf="!loginSwitch">
+    <div *ngIf="!bes.loginSwitch">
       <div style="margin: 0 auto; vertical-align: top; padding-top: 80px;">
         <div style="width: 50%; float:left;">
-          <app-auth></app-auth>
+          <app-auth (getUsers)="onLoggedIn($event)"></app-auth>
         </div>
         <div style="width: 50%; float:right;">
           <app-signup></app-signup>
@@ -20,11 +20,11 @@
       </div>
     </div>
 
-    <div class="container" *ngIf="loginSwitch">
-        <div class="left">
+    <div class="container" *ngIf="bes.loginSwitch">
+        <div class="left" style="overflow-y: scroll; overflow-x: hidden;">
             <div class="top">
                 <input type="text" />
-                <a href="javascript:;" class="search"></a>
+                <a href="javascript:;" class="search"></a> <!--move it from here-->
             </div>
             <ul class="people">
                 <li *ngFor="let user of users; let i = index" class="person" data-chat="person1">
@@ -45,8 +45,8 @@
                 <div class="conversation-start">
                     <span>Beginning</span>
                 </div>
-                <div *ngIf="conversationFound">
-                  <div *ngFor="let msg of activeConversation.Messages">
+                <div style="overflow-y: scroll; overflow-x: hidden;" *ngIf="conversationFound">
+                  <div *ngFor="let msg of activeConversation.Messages"> <!--add padding to the right-->
                     <div class="bubble" [class.you]="otherUser == msg.Sender" [class.me]="otherUser != msg.Sender">
                       {{msg.Content}}
                     </div>
