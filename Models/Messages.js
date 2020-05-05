@@ -33,7 +33,8 @@ var MessagesSchema = mongoose.Schema
         }
       }
     ]
-  }
+  },
+  { usePushEach: true } // try to remove this workaround. https://github.com/Automattic/mongoose/issues/5574
 );
 
 var Messages = mongoose.model("Messages", MessagesSchema);

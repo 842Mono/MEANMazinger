@@ -123,6 +123,7 @@ mazinger.get('*', (req, res) => {res.sendFile(__dirname + "/staticDir/frontend/d
 
 
 var mongoose = require('mongoose');
+// mongoose.set("debug", true);
 mongoose.connect("mongodb://localhost:27017/mazinger");
 var thedb = mongoose.connection;
 thedb.on('error', console.error.bind(console, 'Check The mongodb daemon!'));
