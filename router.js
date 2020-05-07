@@ -28,6 +28,16 @@ router.get('/getallusers', controller.authorise, controller.getAllUsers);
 
 router.post('/fetchconversation', controller.authorise, controller.fetchConversation);
 
+
+
+router.post('/creategroupchat', controller.authorise, controller.createGroupChat);
+
+router.post('/adduserstochat', controller.authorise, controller.addUsersToChat);
+
+router.post('/sendmesssagegroup', controller.authorise, controller.sendMessageGroup);
+
+router.post('/fetchconversationgroup', controller.authorise, controller.fetchConversationGroup);
+
 //router.get('/');
 
 /*router.post

@@ -45,8 +45,20 @@ var UserSchema = mongoose.Schema
       type:String,
       unique:true,
       sparse:true
-    }
-  }
+    },
+
+    ConversationIDs:
+    [
+      String
+      // {
+      //   ConversationID:
+      //   {
+      //     type:String
+      //   }
+      // }
+    ]
+  },
+  { usePushEach: true } // try to remove this workaround. https://github.com/Automattic/mongoose/issues/5574
 );
 
 UserSchema.methods.comparePassword = function(pw, cb)
@@ -68,7 +80,7 @@ UserSchema.methods.comparePassword = function(pw, cb)
   );
 };
 
-var User = mongoose.model("User",UserSchema);
+var User = mongoose.model("User", UserSchema);
 
 module.exports = User;
 

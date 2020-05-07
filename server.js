@@ -12,16 +12,52 @@ var controller = require('./controller');
 
 var mazinger = express();
 
+// mazinger.use((req, res, next) => {
+//   res.header('Access-Control-Allow-Origin', '*');
+//   res.header('Access-Control-Allow-Credentials', true);
+//   res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS');
+//   res.header(
+//     'Access-Control-Allow-Headers',
+//     'Origin,X-Requested-With,content-type,Accept,Content-Type,application/json'
+//   );
+//   next();
+// });
+
+
+mazinger.use(cors());
+
+
 var http = require('http');
 var server = http.createServer(mazinger);
 
 
 var io = require('socket.io').listen(server);
-
+// var io = require('socket.io')(server, { origins: '*:*'});
+// io.set('origins', '*:*');
+// const io = require("socket.io")(server, {
+//   handlePreflightRequest: (req, res) => {
+//       const headers = {
+//           "Access-Control-Allow-Headers": "Content-Type, Authorization",
+//           "Access-Control-Allow-Origin": req.headers.origin, //or the specific origin you want to give access to,
+//           "Access-Control-Allow-Credentials": true
+//       };
+//       res.writeHead(200, headers);
+//       res.end();
+//   }
+// });
 server.listen(5100);
 
 //var User = require('./Models/User');
 //var Messages = require('./Models/Messages');
+
+
+
+
+
+
+
+
+
 
 var connections = [];
 var countTotalSockets = 0;
@@ -102,6 +138,60 @@ io.sockets.on
 
     //socket.to(<socketid>).emit('hey', 'I just met you');
 
+
+    socket.on
+    (
+      'changeNewMessageGroup',
+      function(data)
+      {
+        let recepients = JSON.parse(recepients);
+
+        recepients.forEach(recepient =>
+        {
+          let user = connections.filter
+          (
+            function(connectionElement)
+            {
+              return connectionElement.un == recepient;
+            }
+          );
+          if(user.length > 0)
+          {
+            user[0].s.emit('changeConversation',{sender:data.sender});
+            console.log("\n\nServerEvent: Active Message!\n" + connections.length + " Authenticated.\n" + countTotalSockets + " Total.");
+          }
+        });
+      }
+    );
+    socket.on
+    (
+      'changeNewMessageGroupID',
+      function(data)
+      {
+        controller.getRecepientsFromID(data.ConversationID, function(recepients)
+        {
+
+          recepients.forEach(recepient =>
+          {
+            let user = connections.filter
+            (
+              function(connectionElement)
+              {
+                return connectionElement.un == recepient;
+              }
+            );
+            if(user.length > 0 && user[0] !== data.sender)
+            {
+              console.log(data.sender);
+              console.log("^^");
+              user[0].s.emit('changeConversation',{sender:data.sender});
+              console.log("\n\nServerEvent: Active Message!\n" + connections.length + " Authenticated.\n" + countTotalSockets + " Total.");
+            }
+          });
+
+        });
+      }
+    );
   }
 );
 
@@ -138,6 +228,5 @@ thedb.once
 
 require('./passport')(passport);
 
-mazinger.use(cors());
 
 mazinger.listen(5001, function(){console.log("Mazinnnnngeeeeer zeeeeeeeeee5001eeeeeee!")});

@@ -131,7 +131,6 @@ let ControllerFunctions =
   },
   fetchConversation:function(req,res)
   {
-    console.log(req.body);
     if(!req.body.requiredUsername)
       return res.json({success:false, msg:"No Required Username"});
     let requesterUsername = req.user.Username; //"u1"; //req.user.Username;
@@ -156,7 +155,7 @@ let ControllerFunctions =
   sendMessage:function(req,res)
   {
     if(!req.body.RecepientUsername || !req.body.Content)
-      return res.json({success:false, msg:"Some input data missing"});
+      return res.json({success:false, msg:"Some input data is missing."});
     let Username = req.user.Username; //"u1"; //req.user.Username;
     let RecepientUsername = req.body.RecepientUsername;
     let Message =
@@ -238,7 +237,181 @@ let ControllerFunctions =
       {multi: true},
       function(err,obj){console.log(obj);}
     );
-  }
+  },
+
+  createGroupChat:function(req, res)
+  {
+    console.log(req.ConversationName);
+    console.log("^");
+    let conversationName = req.ConversationName;
+
+    let newRoom = new Messages
+    (
+      {
+        ConversationName:conversationName,
+        AssociatedUsers:[req.user.Username]
+      }
+    );
+
+    newRoom.save
+    (
+      function(err, savedNewRoom)
+      {
+        if(err)
+        {
+          console.error(err);
+          return res.json({success:false, msg:"Error saving new chat room."});
+        }
+        else
+        {
+          // console.log(savedNewRoom);
+          // console.log(savedNewRoom._id);
+
+          // console.log("req.user:::::::::::::::::::::::::::::::");
+          // console.log(req.user);
+          // console.log("req.user.coIDs}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}");
+          // console.log(req.user.ConversationIDs);
+
+          req.user.ConversationIDs.push(savedNewRoom._id);
+          req.user.save
+          (
+            function(err, savedUser)
+            {
+              if(err)
+              {
+                console.log(err);
+                return res.json({success:false, msg:"Error saving room to user."});
+              }
+              else
+              {
+                // savedUser.ConversationIDs.forEach(id => {
+                //   console.log("an id here");
+                //   console.log(id);
+                // });
+                // console.log(savedUser.ConversationIDs);
+                return res.json({success:true, msg:"New conversation saved.", conversationID:savedNewRoom._id});
+              }
+            }
+          );
+        }
+      }
+    );
+  },
+  addUsersToChat:function(req,res)
+  {
+    let ConversationID = req.body.ConversationID;
+    let UsersToAdd = JSON.parse(req.body.UsersToAdd); //expected to be an array
+
+    Messages.findOne
+    (
+      {_id:ConversationID},
+      function(err, conversation)
+      {
+        if(err)
+        {
+          console.error(err);
+          return res.json({success:false, msg:"Error retrieving conversation."});
+        }
+        else
+        {
+          // console.log(conversation);
+          // console.log("^^^^^^^^^^^^^^^^^^^^^^^^^^");
+          // console.log(conversation._id);
+          // console.log(conversation.AssociatedUsers);
+          UsersToAdd.forEach(user => conversation.AssociatedUsers.push(user));
+          conversation.save
+          (
+            function(err, savedConversation)
+            {
+              if(err)
+              {
+                console.error(err);
+                return res.json({success:false, msg:"Error saving conversation."});
+              }
+              else
+              {
+                return res.json({success:true, msg:"Conversation updated.",});
+              }
+            }
+          );
+        }
+      }
+    );
+  },
+  sendMessageGroup:function(req,res)
+  {
+    if(!req.body.ConversationID || !req.body.Content)
+      return res.json({success:false, msg:"Some input data is missing."});
+    let Username = req.user.Username; //"u1"; //req.user.Username;
+    let ConversationID = req.body.ConversationID;
+    let Message =
+    {
+      Timestamp:new Date(),
+      Content:req.body.Content,
+      Sender:Username
+    };
+
+    Messages.findOne
+    (
+      {_id:ConversationID},
+      function(err,conversation)
+      {
+        if(err)
+          console.log(err);
+
+        conversation.Messages.push(Message);
+        conversation.save
+        (
+          function(err,savedConversation)
+          {
+            if(err)
+            {
+              console.log(err);
+              return res.json({success:false, msg:"Failed To Save Message."});
+            }
+            else
+              return res.json({success:true, msg:"Message Saved Successfully.", newConversation:savedConversation});
+          }
+        );
+      }
+    );
+  },
+  getRecepientsFromID(ConversationID, next) //asynchronous
+  {
+    Messages.findOne
+    (
+      {_id:ConversationID},
+      function(err, conversation)
+      {
+        if(err)
+        {
+          console.error(err);
+        }
+        next(conversation.AssociatedUsers);
+      }
+    );
+  },
+  fetchConversationGroup:function(req,res)
+  {
+    let requesterUsername = req.user.Username; //"u1"; //req.user.Username;
+    let ConversationID = req.body.ConversationID;
+
+    Messages.findOne
+    (
+      {_id:ConversationID},
+      function(err,conversation)
+      {
+        if(err)
+          console.log(err);
+        if(!conversation)
+          return res.json({success:false, msg:"Conversation Not Found"});
+        else
+        {
+          res.json({success:true, conversation:conversation});
+        }
+      }
+    );
+  },
 }
 
 module.exports = ControllerFunctions;

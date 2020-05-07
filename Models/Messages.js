@@ -3,15 +3,35 @@ var mongoose = require('mongoose');
 var MessagesSchema = mongoose.Schema
 (
   {
+    // ConversationID:
+    // {
+    //   type:String
+    // },
+    ConversationName:
+    {
+      type:String
+    },
+    AssociatedUsers:
+    [
+      String
+      // {
+      //   Username:
+      //   {
+      //     type:String
+      //     // required:true
+      //   }
+      // }
+    ],
+
     Username1:
     {
-      type:String,
-      required:true
+      type:String
+      // required:true
     },
     Username2:
     {
-      type:String,
-      required:true
+      type:String
+      // required:true
     },
     Messages:
     [

@@ -40,7 +40,7 @@ export class ChatWindowComponent implements OnInit
 
 
     console.log(bes.backendSocket);
-    this.socketio = io(bes.backendSocket);
+    this.socketio = io.connect(bes.backendSocket);
     this.socketio.on('changeGetAllUsers', (data) => {console.log("Need to change Users!"); if(bes.loginSwitch) this.showAllUsers(); });
     this.socketio.on('changeConversation', (data) => {this.onMessageReceived(data);});
     //this.socketio.on('connect',function(){this.socketio.emit('authenticated', { Username:this.bes.thisUser });});
