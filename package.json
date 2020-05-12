@@ -17,6 +17,7 @@
     "jsonwebtoken": "^7.4.1",
     "mongoose": "^4.10.2",
     "morgan": "^1.8.2",
+    "openvidu-node-client": "^2.13.0",
     "passport": "^0.3.2",
     "passport-jwt": "^2.2.1",
     "passport-local": "^1.0.0",

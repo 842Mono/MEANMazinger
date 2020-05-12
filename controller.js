@@ -411,7 +411,7 @@ let ControllerFunctions =
         }
       }
     );
-  },
+  }
 }
 
 module.exports = ControllerFunctions;
