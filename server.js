@@ -76,6 +76,8 @@ var options = {
   cert: fs.readFileSync('openviducert.pem')
 };
 https.createServer(options, mazinger).listen(5000);
+
+// For demo purposes we ignore self-signed certificate
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
 
 // Environment variable: URL where our OpenVidu server is listening
@@ -293,6 +295,9 @@ function getBasicAuth() {
 var connections = [];
 var countTotalSockets = 0;
 
+let openviduSessionsMap = {};
+let openviduSessionNamesTokensMap = {};
+
 io.sockets.on
 (
   'connection',
@@ -401,7 +406,6 @@ io.sockets.on
       {
         controller.getRecepientsFromID(data.ConversationID, function(recepients)
         {
-
           recepients.forEach(recepient =>
           {
             let user = connections.filter
@@ -413,14 +417,142 @@ io.sockets.on
             );
             if(user.length > 0 && user[0] !== data.sender)
             {
-              console.log(data.sender);
-              console.log("^^");
               user[0].s.emit('changeConversation',{sender:data.sender});
               console.log("\n\nServerEvent: Active Message!\n" + connections.length + " Authenticated.\n" + countTotalSockets + " Total.");
             }
           });
 
         });
+      }
+    );
+
+    socket.on
+    (
+      'callAndRing',
+      function(data)
+      {
+        let sessionName = data.ConversationID; //need to generate a session name
+        let role = OpenViduRole.PUBLISHER;
+        let tokenOptions = {
+          data: "",
+          role: role
+        };
+
+        if(openviduSessionsMap[data.ConversationID])
+        {
+          // Get the existing Session from the collection
+          let session = openviduSessionsMap[data.ConversationID];
+
+          // Generate a new token asynchronously with the recently created tokenOptions
+          session.generateToken(tokenOptions).then(token =>
+          {
+              // Store the new token in the collection of tokens
+              openviduSessionNamesTokensMap[data.ConversationID].push(token);
+
+              socket.emit('token', { token:token });
+
+              controller.getRecepientsFromID(data.ConversationID, function(recepients)
+              {
+                recepients.forEach(recepient =>
+                {
+                  let user = connections.filter
+                  (
+                    function(connectionElement)
+                    {
+                      return connectionElement.un == recepient;
+                    }
+                  );
+                  if(user.length > 0 && user[0] !== data.sender)
+                  {
+                    user[0].s.emit('ring',{ConversationID:data.ConversationID});
+                    console.log("\n\nServerEvent: Ring!\n" + connections.length + " Authenticated.\n" + countTotalSockets + " Total.");
+                  }
+                });
+              });
+
+          })
+          .catch(error => { console.error(error); });
+        }
+        else
+        {
+          OV.createSession().then(session =>
+          {
+            openviduSessionsMap[data.ConversationID] = session;
+  
+            //?
+            // Store a new empty array in the collection of tokens
+            openviduSessionNamesTokensMap[data.ConversationID] = [];
+  
+            // Generate a new token asynchronously with the recently created tokenOptions
+            session.generateToken(tokenOptions).then(token =>
+            {
+              //?
+              // Store the new token in the collection of tokens
+              openviduSessionNamesTokensMap[data.ConversationID].push(token);
+  
+              // Return the Token to the client
+              socket.emit('token', { token:token });
+  
+              controller.getRecepientsFromID(data.ConversationID, function(recepients)
+              {
+                recepients.forEach(recepient =>
+                {
+                  let user = connections.filter
+                  (
+                    function(connectionElement)
+                    {
+                      return connectionElement.un == recepient;
+                    }
+                  );
+                  if(user.length > 0 && user[0] !== data.sender)
+                  {
+                    user[0].s.emit('ring',{ConversationID:data.ConversationID});
+                    console.log("\n\nServerEvent: Ring!\n" + connections.length + " Authenticated.\n" + countTotalSockets + " Total.");
+                  }
+                });
+              });
+  
+            }).catch(error => { console.error(error); });
+          }).catch(error => { console.error(error); });
+        }
+      }
+    );
+
+    socket.on
+    (
+      'leaveCall',
+      function(data)
+      {
+        var sessionName = data.ConversationID;
+        var token = data.token;
+        console.log('Removing user | {sessionName, token}={' + sessionName + ', ' + token + '}');
+
+        // If the session exists
+        if (openviduSessionsMap[data.ConversationID] && openviduSessionNamesTokensMap[data.ConversationID])
+        {
+            let index = openviduSessionNamesTokensMap[data.ConversationID].indexOf(token);
+
+            // If the token exists
+            if (index !== -1) {
+                // Token removed
+                tokens.splice(index, 1);
+                console.log(sessionName + ': ' + tokens.toString());
+            } else {
+                var msg = 'Problems in the app server: the TOKEN wasn\'t valid';
+                console.log(msg);
+                res.status(500).send(msg);
+            }
+            if (tokens.length == 0) {
+                // Last user left: session must be removed
+                console.log(sessionName + ' empty!');
+                delete mapSessions[sessionName];
+            }
+            res.status(200).send();
+        } else {
+            var msg = 'Problems in the app server: the SESSION does not exist';
+            console.log(msg);
+            res.status(500).send(msg);
+        }
       }
     );
   }
