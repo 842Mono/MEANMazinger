@@ -50,8 +50,10 @@ server.listen(5100);
 //var Messages = require('./Models/Messages');
 
 
+
+
 var OpenVidu = require('openvidu-node-client').OpenVidu;
-var OpenViduRole = require('openvidu-node-client').OpenViduRole;
+var OpenViduRole = require('openvidu-node-client').OpenViduRole; //taken to controller
 var fs = require('fs');
 var https = require('https');
 
@@ -287,276 +289,20 @@ function getBasicAuth() {
 
 
 
+// let socketIOSessionMiddleware = session({
+//   name:"cookie_name",
+//   secret:"cookie_secret"
+//   // store:
+// })
+// io.use(function(socket, next)
+// {
+//   socketIOSessionMiddleware(socket.request, {}, next);
+// })
 
 
 
 
-
-var connections = [];
-var countTotalSockets = 0;
-
-let openviduSessionsMap = {};
-let openviduSessionNamesTokensMap = {};
-
-io.sockets.on
-(
-  'connection',
-  function(socket)
-  {
-    ++countTotalSockets;
-    console.log("\n\nServerEvent: Connect!\n" + connections.length + " Authenticated.\n" + countTotalSockets + " Total.");
-
-    socket.on
-    (
-      'disconnect',
-      function(data)
-      {
-        --countTotalSockets;
-
-        let connection = connections.filter
-        (
-          function(connectionElement)
-          {
-            return connectionElement.s == socket;
-          }
-        );
-        if(connection.length > 0)
-        {
-          connections = connections.filter
-          (
-            function(connectionElement)
-            {
-              return connectionElement.s != socket;
-            }
-          );
-          //console.log(connection[0].un);
-          console.log("Emitting changeGetAllUsers!");
-          controller.socketUpdateOnline(connection[0].un, false, function(){io.sockets.emit('changeGetAllUsers', {});});
-        }
-        //else
-        //  io.sockets.emit('changeGetAllUsers', {});
-
-        console.log("\n\nServerEvent: Disconnect!\n" + connections.length + " Authenticated.\n" + countTotalSockets + " Total.");
-      }
-    );
-
-    socket.on
-    (
-      'authenticated',
-      function(data)
-      {
-        connections.push({s:socket,un:data.Username});
-        controller.socketUpdateOnline(data.Username, true, function(){io.sockets.emit('changeGetAllUsers', {});});
-        console.log("\n\nServerEvent: Authentication!\n" + connections.length + " Authenticated.\n" + countTotalSockets + " Total.");
-      }
-    );
-
-    socket.on
-    (
-      'changeNewMessage',
-      function(data)
-      {
-        let user = connections.filter
-        (
-          function(connectionElement)
-          {
-            return connectionElement.un == data.recepient;
-          }
-        );
-
-        if(user.length > 0)
-        {
-          user[0].s.emit('changeConversation',{sender:data.sender});
-          console.log("\n\nServerEvent: Active Message!\n" + connections.length + " Authenticated.\n" + countTotalSockets + " Total.");
-        }
-      }
-    );
-
-    //socket.to(<socketid>).emit('hey', 'I just met you');
-
-
-    socket.on
-    (
-      'changeNewMessageGroup',
-      function(data)
-      {
-        let recepients = JSON.parse(recepients);
-
-        recepients.forEach(recepient =>
-        {
-          let user = connections.filter
-          (
-            function(connectionElement)
-            {
-              return connectionElement.un == recepient;
-            }
-          );
-          if(user.length > 0)
-          {
-            user[0].s.emit('changeConversation',{sender:data.sender});
-            console.log("\n\nServerEvent: Active Message!\n" + connections.length + " Authenticated.\n" + countTotalSockets + " Total.");
-          }
-        });
-      }
-    );
-    socket.on
-    (
-      'changeNewMessageGroupID',
-      function(data)
-      {
-        controller.getRecepientsFromID(data.ConversationID, function(recepients)
-        {
-          recepients.forEach(recepient =>
-          {
-            let user = connections.filter
-            (
-              function(connectionElement)
-              {
-                return connectionElement.un == recepient;
-              }
-            );
-            if(user.length > 0 && user[0] !== data.sender)
-            {
-              user[0].s.emit('changeConversation',{sender:data.sender});
-              console.log("\n\nServerEvent: Active Message!\n" + connections.length + " Authenticated.\n" + countTotalSockets + " Total.");
-            }
-          });
-
-        });
-      }
-    );
-
-    socket.on
-    (
-      'callAndRing',
-      function(data)
-      {
-        let sessionName = data.ConversationID; //need to generate a session name
-        let role = OpenViduRole.PUBLISHER;
-        let tokenOptions = {
-          data: "",
-          role: role
-        };
-
-        if(openviduSessionsMap[data.ConversationID])
-        {
-          // Get the existing Session from the collection
-          let session = openviduSessionsMap[data.ConversationID];
-
-          // Generate a new token asynchronously with the recently created tokenOptions
-          session.generateToken(tokenOptions).then(token =>
-          {
-              // Store the new token in the collection of tokens
-              openviduSessionNamesTokensMap[data.ConversationID].push(token);
-
-              socket.emit('token', { token:token });
-
-              controller.getRecepientsFromID(data.ConversationID, function(recepients)
-              {
-                recepients.forEach(recepient =>
-                {
-                  let user = connections.filter
-                  (
-                    function(connectionElement)
-                    {
-                      return connectionElement.un == recepient;
-                    }
-                  );
-                  if(user.length > 0 && user[0] !== data.sender)
-                  {
-                    user[0].s.emit('ring',{ConversationID:data.ConversationID});
-                    console.log("\n\nServerEvent: Ring!\n" + connections.length + " Authenticated.\n" + countTotalSockets + " Total.");
-                  }
-                });
-              });
-
-          })
-          .catch(error => { console.error(error); });
-        }
-        else
-        {
-          OV.createSession().then(session =>
-          {
-            openviduSessionsMap[data.ConversationID] = session;
-  
-            //?
-            // Store a new empty array in the collection of tokens
-            openviduSessionNamesTokensMap[data.ConversationID] = [];
-  
-            // Generate a new token asynchronously with the recently created tokenOptions
-            session.generateToken(tokenOptions).then(token =>
-            {
-              //?
-              // Store the new token in the collection of tokens
-              openviduSessionNamesTokensMap[data.ConversationID].push(token);
-  
-              // Return the Token to the client
-              socket.emit('token', { token:token });
-  
-              controller.getRecepientsFromID(data.ConversationID, function(recepients)
-              {
-                recepients.forEach(recepient =>
-                {
-                  let user = connections.filter
-                  (
-                    function(connectionElement)
-                    {
-                      return connectionElement.un == recepient;
-                    }
-                  );
-                  if(user.length > 0 && user[0] !== data.sender)
-                  {
-                    user[0].s.emit('ring',{ConversationID:data.ConversationID});
-                    console.log("\n\nServerEvent: Ring!\n" + connections.length + " Authenticated.\n" + countTotalSockets + " Total.");
-                  }
-                });
-              });
-  
-            }).catch(error => { console.error(error); });
-          }).catch(error => { console.error(error); });
-        }
-      }
-    );
-
-    socket.on
-    (
-      'leaveCall',
-      function(data)
-      {
-        var sessionName = data.ConversationID;
-        var token = data.token;
-        console.log('Removing user | {sessionName, token}={' + sessionName + ', ' + token + '}');
-
-        // If the session exists
-        if (openviduSessionsMap[data.ConversationID] && openviduSessionNamesTokensMap[data.ConversationID])
-        {
-            let index = openviduSessionNamesTokensMap[data.ConversationID].indexOf(token);
-
-            // If the token exists
-            if (index !== -1) {
-                // Token removed
-                tokens.splice(index, 1);
-                console.log(sessionName + ': ' + tokens.toString());
-            } else {
-                var msg = 'Problems in the app server: the TOKEN wasn\'t valid';
-                console.log(msg);
-                res.status(500).send(msg);
-            }
-            if (tokens.length == 0) {
-                // Last user left: session must be removed
-                console.log(sessionName + ' empty!');
-                delete mapSessions[sessionName];
-            }
-            res.status(200).send();
-        } else {
-            var msg = 'Problems in the app server: the SESSION does not exist';
-            console.log(msg);
-            res.status(500).send(msg);
-        }
-      }
-    );
-  }
-);
+require('./socketRouter')(io, OV);
 
 mazinger.use(bodyParser.json());
 mazinger.use(bodyParser.urlencoded({extended:false}));
