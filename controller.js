@@ -721,6 +721,45 @@ let ControllerFunctions =
     );
   },
 
+  addfriend:function(req,res)
+  {
+    let friendUsername = req.body.FriendUsername;
+    // let username = req.user.Username;
+
+    if(req.user.Friends.includes(friendUsername))
+    {
+      return res.json({success:false, msg:"Friend already exists."})
+    }
+
+    req.user.Friends.push(friendUsername);
+    // req.user.Friends = [...new Set(req.user.Friends)];
+
+
+    req.user.save
+    (
+      function(err, savedUser)
+      {
+        if(err)
+        {
+          console.error(err);
+          return res.json({success:false, msg:"Error adding friend."});
+        }
+        if(!savedUser)
+        {
+          return res.json({success:false, msg:"Error adding friend."});
+        }
+        else
+        {
+          return res.json({success:true, msg:"Friend added successfully."})
+        }
+      }
+    );
+  },
+  getFriendsAndConversations:function(req,res)
+  {
+    return res.json({friends:req.user.Friends, conversations:req.user.ConversationIDs});
+  },
+
   socketCallAndRing:function(socket, data, OV)
   {
     let sessionName = data.ConversationID; //need to generate a session name

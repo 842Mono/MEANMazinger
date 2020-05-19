@@ -49,13 +49,41 @@ var UserSchema = mongoose.Schema
 
     ConversationIDs:
     [
-      String
-      // {
-      //   ConversationID:
-      //   {
-      //     type:String
-      //   }
-      // }
+        String
+        // {
+        //   ConversationID:
+        //   {
+        //     type:String
+        //   }
+        // }
+    ],
+    Friends:
+    [
+      {
+        // type:Schema.Types.ObjectId,
+        // ref: 'User',
+        type:String,
+        validate:
+        {
+          validator: function(value)
+          {
+            return new Promise(function(resolve, reject)
+            {
+              mongoose.model('User').findOne({Username:value}, function(err, result)
+              {
+                if(err)
+                  console.error(err);
+                if(result)
+                {
+                  return resolve(true);
+                }
+                else
+                  return reject(new Error("User not found"));
+              })
+            })
+          }
+        }
+      }
     ]
   },
   { usePushEach: true } // try to remove this workaround. https://github.com/Automattic/mongoose/issues/5574

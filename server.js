@@ -302,7 +302,7 @@ function getBasicAuth() {
 
 
 
-require('./socketRouter')(io, OV);
+let _socketRouter = require('./socketRouter')(io, OV);
 
 mazinger.use(bodyParser.json());
 mazinger.use(bodyParser.urlencoded({extended:false}));

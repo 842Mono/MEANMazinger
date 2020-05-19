@@ -38,6 +38,10 @@ router.post('/sendmesssagegroup', controller.authorise, controller.sendMessageGr
 
 router.post('/fetchconversationgroup', controller.authorise, controller.fetchConversationGroup);
 
+router.post('/addfriend', controller.authorise, controller.addfriend);
+
+router.get('/getfriendsandconversations', controller.authorise, controller.getFriendsAndConversations);
+
 //router.get('/');
 
 /*router.post
