@@ -302,6 +302,7 @@ let ControllerFunctions =
           { $set: { Online:true }},
           function()
           {
+            socket.emit('authenticateResponse', {success:true});
             ioSockets.emit('changeGetAllUsers', {});
             console.log("\n\nServerEvent: Authentication!\n" + connections.length + " Authenticated.\n" + countTotalSockets + " Total.");
           }
@@ -310,6 +311,7 @@ let ControllerFunctions =
       }
       else
       {
+        socket.emit('authenticateResponse', {success:false});
         console.error(msg);
         socket.emit('err', msg);
       }
