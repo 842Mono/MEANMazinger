@@ -6,20 +6,25 @@ var token;			// Token retrieved from OpenVidu Server
 
 
 var socket = io("http://localhost:5100/");
+var conversationID = "5eb2a981242b43225fd2fc45";
 socket.on('connect', function(){console.log("connected here!");});
+
+//listeners
+socket.on('videoCallEnd', function(data){console.log("videoCallEnd Emit:"); console.log(data);});
+socket.on('ring', function(data){console.log("ring Emit:"); console.log(data);});
 
 /* OPENVIDU METHODS */
 
 function joinSession() {
 
-	socket.emit('callAndRing', {ConversationID:"5eb2a981242b43225fd2fc45"});
+	socket.emit('callAndRing', {ConversationID:conversationID});
 
 	return false;
 }
 
 socket.on('openviduToken', 	function(data)
 {
-	let token = data.token;
+	token = data.token;
 
 	// --- 1) Get an OpenVidu object ---
 
@@ -129,6 +134,8 @@ function leaveSession() {
 
 	$('#join').show();
 	$('#session').hide();
+
+	socket.emit('leaveCall', {ConversationID:conversationID, token:token});
 }
 
 /* OPENVIDU METHODS */
@@ -327,3 +334,8 @@ function cleanSessionView() {
 }
 
 /* APPLICATION BROWSER METHODS */
+
+function uploadImage()
+{
+	
+}

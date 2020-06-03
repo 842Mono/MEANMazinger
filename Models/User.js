@@ -47,21 +47,10 @@ var UserSchema = mongoose.Schema
       sparse:true
     },
 
-    ConversationIDs:
-    [
-        String
-        // {
-        //   ConversationID:
-        //   {
-        //     type:String
-        //   }
-        // }
-    ],
+    ConversationIDs:[String],
     Friends:
     [
       {
-        // type:Schema.Types.ObjectId,
-        // ref: 'User',
         type:String,
         validate:
         {

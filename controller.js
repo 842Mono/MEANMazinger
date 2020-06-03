@@ -1,5 +1,6 @@
-var User = require('./Models/User');
-var Messages = require('./Models/Messages');
+let User = require('./Models/User');
+let Messages = require('./Models/Messages');
+let MessagesStatus = require('./Models/MessagesStatus');
 
 var passport = require('passport');
 var LocalStrategy = require('passport-local').Strategy;
@@ -12,17 +13,13 @@ let connections = [];
 let countTotalSockets = 0;
 
 var OpenViduRole = require('openvidu-node-client').OpenViduRole;
-let openviduSessionsMap = {};
-let openviduSessionNamesTokensMap = {};
+let openviduMap = {};
 
 let ControllerFunctions =
 {
   authorise:passport.authenticate('jwt', {session:false}),
   register:function(req,res)
   {
-    //req.body.checkBody('firstName', 'FirstName is required').notEmpty();
-    //req.body.checkBody('firstName', 'FirstName is required').notEmpty();
-    //console.log(req);
     if(!req.body.Username || !req.body.Password)
       return res.json({success:false, msg:"Missing Required Inputs"});
 
@@ -59,7 +56,6 @@ let ControllerFunctions =
       }
     );
   },
-  login:function(req,res){},
   authenticate:function(req, res)
   {
     let usernameIn = req.body.Username;
@@ -169,6 +165,7 @@ let ControllerFunctions =
     let Message =
     {
       Timestamp:new Date(),
+      Type:"TextMessage",
       Content:req.body.Content,
       Sender:Username
     };
@@ -393,6 +390,7 @@ let ControllerFunctions =
       let Message =
       {
         Timestamp:new Date(),
+        Type:"TextMessage",
         Content:content,
         Sender:Username
       };
@@ -491,6 +489,7 @@ let ControllerFunctions =
     let Message =
     {
       Timestamp:new Date(),
+      Type:"TextMessage",
       Content:content,
       Sender:sender
     };
@@ -657,6 +656,7 @@ let ControllerFunctions =
     let Message =
     {
       Timestamp:new Date(),
+      Type:"TextMessage",
       Content:req.body.Content,
       Sender:Username
     };
@@ -764,7 +764,7 @@ let ControllerFunctions =
 
   socketCallAndRing:function(socket, data, OV)
   {
-    let sessionName = data.ConversationID; //need to generate a session name
+    let sessionName = data.ConversationID;
     let ConversationID = data.ConversationID;
 
     let userSender = connections.filter
@@ -793,39 +793,63 @@ let ControllerFunctions =
           {
             console.error(err);
           }
-          conversation.AssociatedUsers.forEach(recepient =>
+
+          let logStartTimeMessage =
           {
-            let user = connections.filter
-            (
-              function(connectionElement)
-              {
-                return connectionElement.un == recepient;
-              }
-            );
-            if(user.length > 0 && user[0] !== sender)
+            Timestamp:openviduMap[ConversationID].startTimestamp,
+            Type:"VideoCallStartTime",
+            Sender:sender
+          };
+
+          conversation.Messages.push(logStartTimeMessage);
+
+          conversation.save
+          (
+            function(err)
             {
-              user[0].s.emit('ring',{ConversationID:ConversationID});
-              console.log("\n\nServerEvent: Ring!\n" + connections.length + " Authenticated.\n" + countTotalSockets + " Total.");
+              if(err)
+              {
+                console.error(err);
+              }
+
+              conversation.AssociatedUsers.forEach(recepient =>
+              {
+                let user = connections.filter
+                (
+                  function(connectionElement)
+                  {
+                    return connectionElement.un == recepient;
+                  }
+                );
+                if(user.length > 0 && user[0] !== sender)
+                {
+                  user[0].s.emit('ring',{ConversationID:ConversationID, videoCallStartTime:openviduMap[ConversationID].startTimestamp});
+                  console.log("\n\nServerEvent: Ring!\n" + connections.length + " Authenticated.\n" + countTotalSockets + " Total.");
+                }
+              });
             }
-          });
+          );
         }
       );
     }
 
-    if(openviduSessionsMap[ConversationID])
+    // if(openviduSessionsMap[ConversationID])
+    if(openviduMap[ConversationID])
     {
       // Get the existing Session from the collection
-      let session = openviduSessionsMap[ConversationID];
+      // let session = openviduSessionsMap[ConversationID];
+      let session = openviduMap[ConversationID].session;
 
       // Generate a new token asynchronously with the recently created tokenOptions
       session.generateToken(tokenOptions).then(token =>
       {
         // Store the new token in the collection of tokens
-        openviduSessionNamesTokensMap[ConversationID].push(token);
+        // openviduSessionNamesTokensMap[ConversationID].push(token);
+        openviduMap[ConversationID].tokens.push(token);
 
         socket.emit('openviduToken', { token:token });
 
-        ring();
+        // ring();
 
       }).catch(error => { console.error(error); });
     }
@@ -833,18 +857,27 @@ let ControllerFunctions =
     {
       OV.createSession().then(session =>
       {
-        openviduSessionsMap[ConversationID] = session;
+        // openviduSessionsMap[ConversationID] = session;
+
+        // openviduTimestampsMap[ConversationID] = new Date();
 
         //?
         // Store a new empty array in the collection of tokens
-        openviduSessionNamesTokensMap[ConversationID] = [];
+        // openviduSessionNamesTokensMap[ConversationID] = [];
+
+        openviduMap[ConversationID] =
+        {
+          session:session,
+          startTimestamp:new Date(),
+          tokens:[]
+        };
 
         // Generate a new token asynchronously with the recently created tokenOptions
         session.generateToken(tokenOptions).then(token =>
         {
           //?
           // Store the new token in the collection of tokens
-          openviduSessionNamesTokensMap[ConversationID].push(token);
+          openviduMap[ConversationID].tokens.push(token);
 
           // Return the Token to the client
           socket.emit('openviduToken', { token:token });
@@ -863,32 +896,97 @@ let ControllerFunctions =
   },
   socketLeaveCall:function(socket, data)
   {
-    var sessionName = data.ConversationID;
+    let sessionName = data.ConversationID;
     let ConversationID = data.ConversationID;
-    var Token = data.token;
-    console.log('Removing user | {sessionName, token}={' + sessionName + ', ' + token + '}');
+    let Token = data.token;
+    
+    let userSender = connections.filter
+    (
+      function(connectionElement)
+      {
+        return connectionElement.s.id == socket.id;
+      }
+    );
+    let sender = userSender[0].un;
+    
+    console.log('Removing user | {sessionName, token}={' + sessionName + ', ' + Token + '}');
+
 
     // If the session exists
-    if (openviduSessionsMap[ConversationID] && openviduSessionNamesTokensMap[ConversationID])
+    // if (openviduSessionsMap[ConversationID] && openviduSessionNamesTokensMap[ConversationID])
+    if(openviduMap[ConversationID])
     {
-        let index = openviduSessionNamesTokensMap[ConversationID].indexOf(token);
+      // let index = openviduSessionNamesTokensMap[ConversationID].indexOf(token);
+      let index = openviduMap[ConversationID].tokens.indexOf(Token);
 
-        // If the token exists
-        if (index !== -1) {
-            // Token removed
-            openviduSessionNamesTokensMap[ConversationID].splice(index, 1);
-            console.log(sessionName + ': ' + openviduSessionNamesTokensMap[ConversationID].toString());
-        } else {
-            var msg = "Error: the TOKEN wasn't valid";
-            console.log(msg);
-            socket.emit('err', msg);
-        }
-        if (openviduSessionNamesTokensMap[ConversationID].length == 0) {
-            // Last user left: session must be removed
-            console.log(sessionName + ' empty!');
-            delete openviduSessionsMap[ConversationID];
-        }
-        // res.status(200).send();
+      // If the token exists
+      if (index !== -1) {
+          // Token removed
+          // openviduSessionNamesTokensMap[ConversationID].splice(index, 1);
+          openviduMap[ConversationID].tokens.splice(index, 1);
+          // console.log(sessionName + ': ' + openviduSessionNamesTokensMap[ConversationID].toString());
+          console.log(sessionName + ': ' + openviduMap[ConversationID].tokens.toString());
+      } else {
+          var msg = "Error: the TOKEN wasn't valid";
+          console.log(msg);
+          socket.emit('err', msg);
+      }
+      // if (openviduSessionNamesTokensMap[ConversationID].length == 0) {
+      if(openviduMap[ConversationID].tokens.length == 0)
+      {
+        // Last user left: session must be removed
+        console.log(sessionName + ' empty!');
+        // delete openviduSessionsMap[ConversationID];
+        Messages.findOne
+        (
+          {_id:ConversationID},
+          function(err, conversation)
+          {
+            if(err)
+            {
+              console.error(err);
+            }
+            
+            let timestamp = new Date();
+            let duration = timestamp - openviduMap[ConversationID].startTimestamp;
+            let logEndTimeMessage =
+            {
+              Timestamp:timestamp,
+              Type:"VideoCallEndTime",
+              VideoCallDuration:duration,
+              Sender:sender
+            };
+
+            conversation.Messages.push(logEndTimeMessage);
+
+            conversation.save
+            (
+              function(err)
+              {
+                if(err) {console.error(err);}
+
+                conversation.AssociatedUsers.forEach(recepient =>
+                {
+                  let user = connections.filter
+                  (
+                    function(connectionElement)
+                    {
+                      return connectionElement.un == recepient;
+                    }
+                  );
+                  if(user.length > 0 && user[0] !== sender)
+                  {
+                    user[0].s.emit('videoCallEnd',{ConversationID:ConversationID, videoCallEndTime:timestamp, videoCallDuration:duration});
+                    console.log("\n\nServerEvent: Video Call end!\n" + connections.length + " Authenticated.\n" + countTotalSockets + " Total.");
+                  }
+                });
+                openviduMap[ConversationID] = null;
+              }
+            );
+          }
+        );
+      }
+      // res.status(200).send();
     }
     else
     {
@@ -896,6 +994,286 @@ let ControllerFunctions =
       console.log(msg);
       socket.emit('err', msg);
     }
+  },
+
+  socketNewImage:function(socket, data)
+  {
+
+  },
+  socketNewWaveMessage:function(socket, data)
+  {
+    let recepientUsername = data.Recepient;
+
+    let userSender = connections.filter
+    (
+      function(connectionElement)
+      {
+        return connectionElement.s.id == socket.id;
+      }
+    );
+    let userRecepient = connections.filter
+    (
+      function(connectionElement)
+      {
+        return connectionElement.un == recepientUsername;
+      }
+    );
+
+    let next = function({success, msg})
+    {
+      if(success)
+      {
+        userRecepient[0].s.emit('newWaveMessage',{sender:userSender[0].un});
+        console.log("\n\nServerEvent: Wave Message!\n" + connections.length + " Authenticated.\n" + countTotalSockets + " Total.");
+      }
+      else
+      {
+        console.log(msg);
+        socket.emit('err', msg);
+      }
+    }
+    
+    if(userRecepient.length > 0)
+    {
+      let Username = userSender[0].un;
+      let Message =
+      {
+        Timestamp:new Date(),
+        Type:"WaveMessage",
+        Sender:Username
+      };
+
+      Messages.findOne
+      (
+        {$or:[{Username1:Username, Username2:recepientUsername},{Username1:recepientUsername, Username2:Username}]},
+        function(err,conversation)
+        {
+          if(err)
+            console.log(err);
+          //if(Object.keys(conversation).length == 0)
+          if(!conversation)
+          {
+            let newConversation = new Messages
+            (
+              {
+                Username1:Username,
+                Username2:recepientUsername,
+                Messages:[Message]
+              }
+            );
+            newConversation.save
+            (
+              function(err,savedConversation)
+              {
+                if(err)
+                {
+                  console.log(err);
+                  next({success:false, msg:"Failed To Save New Conversation."});
+                }
+                else
+                  next({success:true, msg:"New Conversation Saved Successfully.", newConversation:savedConversation});
+              }
+            );
+          }
+          else
+          {
+            conversation.Messages.push(Message);
+            conversation.save
+            (
+              function(err,savedConversation)
+              {
+                if(err)
+                {
+                  console.log(err);
+                  next({success:false, msg:"Failed To Save Message."});
+                }
+                else
+                  next({success:true, msg:"Message Saved Successfully.", newConversation:savedConversation});
+                //
+              }
+            );
+          }
+        }
+      );
+    }
+    else
+    {
+      socket.emit("error", "Cannot find recepient.")
+    }
+  },
+  socketNewWaveMessageGroup:function(socket, data)
+  {
+    let ConversationID = data.ConversationID;
+    let userSender = connections.filter
+    (
+      function(connectionElement)
+      {
+        return connectionElement.s.id == socket.id;
+      }
+    );
+    let sender = userSender[0].un;
+
+    let Message =
+    {
+      Timestamp:new Date(),
+      Type:"WaveMessage",
+      Sender:sender
+    };
+
+    Messages.findOne
+    (
+      {_id:ConversationID},
+      function(err, conversation)
+      {
+        if(err)
+        {
+          console.error(err);
+          socket.emit('err', "Error retrieving conversation.")
+        }
+        if(conversation)
+        {
+          conversation.Messages.push(Message);
+          conversation.save
+          (
+            function(err,savedConversation)
+            {
+              if(err)
+              {
+                console.log(err);
+                socket.emit('err', "Error saving conversation.");
+              }
+              else
+              {
+                let recepients = conversation.AssociatedUsers;
+  
+                recepients.forEach(recepient =>
+                {
+                  let user = connections.filter
+                  (
+                    function(connectionElement)
+                    {
+                      return connectionElement.un == recepient;
+                    }
+                  );
+                  if(user.length > 0 && user[0] !== sender)
+                  {
+                    user[0].s.emit('newWaveMessage',{sender:sender, conversationID:ConversationID});
+                    console.log("\n\nServerEvent: Wave Message!\n" + connections.length + " Authenticated.\n" + countTotalSockets + " Total.");
+                  }
+                });
+              }
+            }
+          );
+        }
+        else
+        {
+          console.log("Cannot find conversation.");
+          socket.emit('err', "Cannot find conversation");
+        }
+      }
+    );
+  },
+  socketCreateGroupChat:function(socket, data)
+  {
+    let conversationName = data.ConversationName;
+    let userSender = connections.filter
+    (
+      function(connectionElement)
+      {
+        return connectionElement.s.id == socket.id;
+      }
+    );
+    let sender = userSender[0].un;
+
+    let newRoom = new Messages
+    (
+      {
+        ConversationName:conversationName,
+        AssociatedUsers:[sender]
+      }
+    );
+
+    newRoom.save
+    (
+      function(err, savedNewRoom)
+      {
+        if(err)
+        {
+          console.error(err);
+          return socket.emit('err', "Error saving new chat room.");
+        }
+        else
+        {
+          User.findOne //authenticated sockets should have access to users
+          (
+            {Username:sender},
+            function(err, User)
+            {
+              if(err)
+              {
+                socket.emit('err', "Error retrieving user.");
+              }
+              else
+              {
+                User.ConversationIDs.push(savedNewRoom._id);
+                User.save
+                (
+                  function(err, savedUser)
+                  {
+                    if(err)
+                    {
+                      console.log(err);
+                      return socket.emit('err', "Error saving room to user.");
+                    }
+                    else
+                    {
+                      return socket.emit('newRoomAcknowledgement', {msg:"New conversation saved.", conversationID:savedNewRoom._id});
+                    }
+                  }
+                );
+              }
+            }
+          );
+        }
+      }
+    );
+  },
+  socketAddUsersToChat:function(socket, data) //need to test
+  {
+    let ConversationID = data.ConversationID;
+    let UsersToAdd = JSON.parse(data.UsersToAdd); //expected to be an array
+
+    Messages.findOne
+    (
+      {_id:ConversationID},
+      function(err, conversation)
+      {
+        if(err)
+        {
+          console.error(err);
+          return socket.emit('err', "Error retrieving conversation.");
+        }
+        else
+        {
+          UsersToAdd.forEach(user => conversation.AssociatedUsers.push(user));
+          conversation.save
+          (
+            function(err, savedConversation)
+            {
+              if(err)
+              {
+                console.error(err);
+                return socket.emit('err', "Error saving conversation.");
+              }
+              else
+              {
+                return socket.emit('addUsersToChatAcknowledgement', "Conversation updated.");
+              }
+            }
+          );
+        }
+      }
+    );
   }
 }
 

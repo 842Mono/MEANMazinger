@@ -41,10 +41,19 @@ var MessagesSchema = mongoose.Schema
           type:Date,
           required:true
         },
-        Content:
+        Type:
         {
           type:String,
+          enum:["TextMessage", "WaveMessage", "VideoCallStartTime", "VideoCallEndTime"],
           required:true
+        },
+        Content: // In case of TextMessage
+        {
+          type:String
+        },
+        VideoCallDuration: // In case of VideoCallEndTime
+        {
+          type:Date
         },
         Sender:
         {
