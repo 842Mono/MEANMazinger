@@ -280,7 +280,7 @@ let ControllerFunctions =
       {Online:true},
       { $set: { Online:false }},
       {multi: true},
-      function(err,obj){console.log(obj);}
+      function(err,obj){ if(err) { console.error(err); } console.log(obj);}
     );
   },
   socketAuthenticate:function(ioSockets, socket, data)
@@ -352,6 +352,7 @@ let ControllerFunctions =
   socketSendMessage:function(socket, data) //(content, RecepientUsername, SenderUsername, next)
   {
     let content = data.Message;
+    let contentType = data.ContentType; // enum "TextMessage", "ImageFileBase64".
     let recepientUsername = data.Recipient; // fix spelling mistake to Recipient.
 
     let userSender = connections.filter
@@ -375,7 +376,7 @@ let ControllerFunctions =
       {
         if(userRecepient.length > 0)
         {
-          userRecepient[0].s.emit('newMessage',{sender:userSender[0].un, message:content});
+          userRecepient[0].s.emit('newMessage',{sender:userSender[0].un, message:content, type:contentType});
 
           MessagesStatus.findOne
           (
@@ -421,7 +422,7 @@ let ControllerFunctions =
     let Message =
     {
       Timestamp:new Date(),
-      Type:"TextMessage",
+      Type:contentType,
       Content:content,
       Sender:Username
     };
@@ -1254,10 +1255,153 @@ let ControllerFunctions =
     }
   },
 
-  socketNewImage:function(socket, data)
-  {
+  // socketNewImage:function(socket, data)
+  // {
+  //   const content = data.Image;
+  //   let recepientUsername = data.Recipient; // fix spelling mistake to Recipient.
 
-  },
+  //   let userSender = connections.filter
+  //   (
+  //     function(connectionElement)
+  //     {
+  //       return connectionElement.s.id == socket.id;
+  //     }
+  //   );
+  //   let userRecepient = connections.filter
+  //   (
+  //     function(connectionElement)
+  //     {
+  //       return connectionElement.un == recepientUsername;
+  //     }
+  //   );
+
+  //   let next = function({success, msg, newConversation})
+  //   {
+  //     if(success)
+  //     {
+  //       if(userRecepient.length > 0)
+  //       {
+  //         userRecepient[0].s.emit('newMessage',{sender:userSender[0].un, message:content});
+
+  //         MessagesStatus.findOne
+  //         (
+  //           {ConversationID:newConversation._id},
+  //           function(err, status)
+  //           {
+  //             if(err) {console.error(err);}
+  //             status.DeliveredTo.push
+  //             (
+  //               {
+  //                 Username:recepientUsername,
+  //                 Date: new Date()
+  //               }
+  //             );
+
+  //             status.save
+  //             (
+  //               function(err, savedStatus)
+  //               {
+  //                 if(err) {console.error(err);}
+  //                 socket.emit('messageStatus', {recepient:recepientUsername, conversationID:newConversation._id, status:savedStatus});
+  //               }
+  //             )
+  //           }
+  //         );
+  //         console.log("\n\nServerEvent: Active Message!\n" + connections.length + " Authenticated.\n" + countTotalSockets + " Total.");
+  //       }
+  //       else
+  //       {
+  //         socket.emit('messageStatus', {recepient:recepientUsername, status:"Sent"});
+  //       }
+  //     }
+  //     else
+  //     {
+  //       console.log(msg);
+  //       socket.emit('err', msg);
+  //     }
+  //   }
+    
+  //   // if(userRecepient.length > 0)
+  //   // {
+  //   let Username = userSender[0].un;
+  //   let Message =
+  //   {
+  //     Timestamp:new Date(),
+  //     Type:"ImageFileBase64",
+  //     Content:content,
+  //     Sender:Username
+  //   };
+
+  //   Messages.findOne
+  //   (
+  //     {$or:[{Username1:Username, Username2:recepientUsername},{Username1:recepientUsername, Username2:Username}]},
+  //     function(err,conversation)
+  //     {
+  //       if(err)
+  //         console.log(err);
+  //       //if(Object.keys(conversation).length == 0)
+  //       if(!conversation)
+  //       {
+  //         let newConversation = new Messages
+  //         (
+  //           {
+  //             Username1:Username,
+  //             Username2:recepientUsername,
+  //             Messages:[Message]
+  //           }
+  //         );
+  //         newConversation.save
+  //         (
+  //           function(err,savedConversation)
+  //           {
+  //             if(err)
+  //             {
+  //               console.log(err);
+  //               next({success:false, msg:"Failed To Save New Conversation."});
+  //             }
+  //             else
+  //             {
+  //               let newMessagesStatus = new MessagesStatus
+  //               (
+  //                 {
+  //                   ConversationID:savedConversation._id
+  //                 }
+  //               );
+
+  //               newMessagesStatus.save
+  //               (
+  //                 function(err, savedMessagesStatus)
+  //                 {
+  //                   if(err) { console.error(err); }
+
+  //                   next({success:true, msg:"New Conversation Saved Successfully.", newConversation:savedConversation});
+  //                 }
+  //               );
+  //             }
+  //           }
+  //         );
+  //       }
+  //       else
+  //       {
+  //         conversation.Messages.push(Message);
+  //         conversation.save
+  //         (
+  //           function(err,savedConversation)
+  //           {
+  //             if(err)
+  //             {
+  //               console.log(err);
+  //               next({success:false, msg:"Failed To Save Message."});
+  //             }
+  //             else
+  //               next({success:true, msg:"Message Saved Successfully.", newConversation:savedConversation});
+  //             //
+  //           }
+  //         );
+  //       }
+  //     }
+  //   );
+  // },
   socketNewWaveMessage:function(socket, data)
   {
     let recepientUsername = data.Recepient;

@@ -103,12 +103,18 @@
 					</div>
 				</div>
 				<div id="send-image" class="jumbotron">
-					<form action="uploadImage()">
+					<form>
 						<p>Select image:</p>
 						<br/>
 						<input type="file" id="img1" name="img1" accept="image/*">
-						<input type="submit">
+						<br/><div>Send To:</div><br/>
+						<input type="" id="imgUsername" name="imgUsername"><br/>
+						<!-- <input type="submit"> -->
+						<input type="button" value="send" onclick="uploadImage()">
 					</form>
+				</div>
+				<div id="recieveImages">
+
 				</div>
 			</div>
 

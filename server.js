@@ -77,7 +77,7 @@ expressApp.get('*', (req, res) => {res.sendFile(__dirname + "/staticDir/frontend
 
 var mongoose = require('mongoose');
 // mongoose.set("debug", true);
-mongoose.connect("mongodb://localhost:27017/mazinger");
+mongoose.connect("mongodb://localhost:27017/mazinger", {useMongoClient:true});
 var thedb = mongoose.connection;
 thedb.on('error', console.error.bind(console, 'Check The mongodb daemon!'));
 thedb.once

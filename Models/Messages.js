@@ -44,8 +44,12 @@ var MessagesSchema = mongoose.Schema
         Type:
         {
           type:String,
-          enum:["TextMessage", "WaveMessage", "VideoCallStartTime", "VideoCallEndTime"],
+          enum:["TextMessage", "ImageFileBase64", "WaveMessage", "VideoCallStartTime", "VideoCallEndTime"],
           required:true
+        },
+        ImageBase64:
+        {
+          type:String
         },
         Content: // In case of TextMessage
         {

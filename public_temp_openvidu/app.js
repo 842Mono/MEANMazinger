@@ -337,5 +337,27 @@ function cleanSessionView() {
 
 function uploadImage()
 {
+	let reader = new FileReader();
 	
+	reader.onload = function(e)
+	{
+		console.log(e.target.result);
+
+		socket.emit('newMessage', {Message:e.target.result, ContentType:"ImageFileBase64", Recipient:document.getElementById("imgUsername").value});
+
+		// let box = document.getElementById("recieveImages");
+	}
+
+	let image = document.getElementById("img1");
+	
+	console.log(image.files);
+	console.log(image.files[0]);
+
+	let b64 = reader.readAsDataURL(image.files[0]);
 }
+
+socket.on("newMessage", function(data)
+{
+	let box = document.getElementById("recieveImages");
+	box.innerHTML += ("<p>" + data.sender + " , " + data.type + "</p><br/><img src='" + data.message + "' />")
+});
