@@ -352,7 +352,7 @@ let ControllerFunctions =
   socketSendMessage:function(socket, data) //(content, RecepientUsername, SenderUsername, next)
   {
     let content = data.Message;
-    let recepientUsername = data.Recepient;
+    let recepientUsername = data.Recipient; // fix spelling mistake to Recipient.
 
     let userSender = connections.filter
     (
@@ -369,12 +369,44 @@ let ControllerFunctions =
       }
     );
 
-    let next = function({success, msg})
+    let next = function({success, msg, newConversation})
     {
       if(success)
       {
-        userRecepient[0].s.emit('newMessage',{sender:userSender[0].un, message:content});
-        console.log("\n\nServerEvent: Active Message!\n" + connections.length + " Authenticated.\n" + countTotalSockets + " Total.");
+        if(userRecepient.length > 0)
+        {
+          userRecepient[0].s.emit('newMessage',{sender:userSender[0].un, message:content});
+
+          MessagesStatus.findOne
+          (
+            {ConversationID:newConversation._id},
+            function(err, status)
+            {
+              if(err) {console.error(err);}
+              status.DeliveredTo.push
+              (
+                {
+                  Username:recepientUsername,
+                  Date: new Date()
+                }
+              );
+
+              status.save
+              (
+                function(err, savedStatus)
+                {
+                  if(err) {console.error(err);}
+                  socket.emit('messageStatus', {recepient:recepientUsername, conversationID:newConversation._id, status:savedStatus});
+                }
+              )
+            }
+          );
+          console.log("\n\nServerEvent: Active Message!\n" + connections.length + " Authenticated.\n" + countTotalSockets + " Total.");
+        }
+        else
+        {
+          socket.emit('messageStatus', {recepient:recepientUsername, status:"Sent"});
+        }
       }
       else
       {
@@ -383,75 +415,91 @@ let ControllerFunctions =
       }
     }
     
-    if(userRecepient.length > 0)
+    // if(userRecepient.length > 0)
+    // {
+    let Username = userSender[0].un;
+    let Message =
     {
+      Timestamp:new Date(),
+      Type:"TextMessage",
+      Content:content,
+      Sender:Username
+    };
 
-      let Username = userSender[0].un;
-      let Message =
+    Messages.findOne
+    (
+      {$or:[{Username1:Username, Username2:recepientUsername},{Username1:recepientUsername, Username2:Username}]},
+      function(err,conversation)
       {
-        Timestamp:new Date(),
-        Type:"TextMessage",
-        Content:content,
-        Sender:Username
-      };
-
-      Messages.findOne
-      (
-        {$or:[{Username1:Username, Username2:recepientUsername},{Username1:recepientUsername, Username2:Username}]},
-        function(err,conversation)
+        if(err)
+          console.log(err);
+        //if(Object.keys(conversation).length == 0)
+        if(!conversation)
         {
-          if(err)
-            console.log(err);
-          //if(Object.keys(conversation).length == 0)
-          if(!conversation)
-          {
-            let newConversation = new Messages
-            (
+          let newConversation = new Messages
+          (
+            {
+              Username1:Username,
+              Username2:recepientUsername,
+              Messages:[Message]
+            }
+          );
+          newConversation.save
+          (
+            function(err,savedConversation)
+            {
+              if(err)
               {
-                Username1:Username,
-                Username2:recepientUsername,
-                Messages:[Message]
+                console.log(err);
+                next({success:false, msg:"Failed To Save New Conversation."});
               }
-            );
-            newConversation.save
-            (
-              function(err,savedConversation)
+              else
               {
-                if(err)
-                {
-                  console.log(err);
-                  next({success:false, msg:"Failed To Save New Conversation."});
-                }
-                else
-                  next({success:true, msg:"New Conversation Saved Successfully.", newConversation:savedConversation});
+                let newMessagesStatus = new MessagesStatus
+                (
+                  {
+                    ConversationID:savedConversation._id
+                  }
+                );
+
+                newMessagesStatus.save
+                (
+                  function(err, savedMessagesStatus)
+                  {
+                    if(err) { console.error(err); }
+
+                    next({success:true, msg:"New Conversation Saved Successfully.", newConversation:savedConversation});
+                  }
+                );
               }
-            );
-          }
-          else
-          {
-            conversation.Messages.push(Message);
-            conversation.save
-            (
-              function(err,savedConversation)
-              {
-                if(err)
-                {
-                  console.log(err);
-                  next({success:false, msg:"Failed To Save Message."});
-                }
-                else
-                  next({success:true, msg:"Message Saved Successfully.", newConversation:savedConversation});
-                //
-              }
-            );
-          }
+            }
+          );
         }
-      );
-    }
-    else
-    {
-      socket.emit("error", "Cannot find recepient.")
-    }
+        else
+        {
+          conversation.Messages.push(Message);
+          conversation.save
+          (
+            function(err,savedConversation)
+            {
+              if(err)
+              {
+                console.log(err);
+                next({success:false, msg:"Failed To Save Message."});
+              }
+              else
+                next({success:true, msg:"Message Saved Successfully.", newConversation:savedConversation});
+              //
+            }
+          );
+        }
+      }
+    );
+    // }
+    // else
+    // {
+    //   socket.emit("err", "Cannot find recepient.")
+    // }
   },
   // socketSendMessageGroupUsers:function(socket, data)
   // {
@@ -520,6 +568,8 @@ let ControllerFunctions =
               {
                 let recepients = conversation.AssociatedUsers;
   
+                let promisesArray = [];
+
                 recepients.forEach(recepient =>
                 {
                   let user = connections.filter
@@ -529,12 +579,84 @@ let ControllerFunctions =
                       return connectionElement.un == recepient;
                     }
                   );
-                  if(user.length > 0 && user[0] !== sender)
+                  if(user.length > 0 && user[0].un !== sender)
                   {
-                    user[0].s.emit('changeConversation',{sender:sender, message:content, conversationID:ConversationID});
+                    user[0].s.emit('newMessage',{sender:sender, message:content, conversationID:ConversationID});
                     console.log("\n\nServerEvent: Active Message!\n" + connections.length + " Authenticated.\n" + countTotalSockets + " Total.");
+
+                    let promise = new Promise(function(resolve)
+                    {
+                      MessagesStatus.findOne
+                      (
+                        {ConversationID:ConversationID},
+                        function(err, status)
+                        {
+                          if(err) {console.error(err);}
+  
+                          let DeliveredToIndex = status.DeliveredTo.findIndex(deliveredToObject => deliveredToObject.Username === user[0].un);
+
+                          if(DeliveredToIndex == -1)
+                          {
+                            status.DeliveredTo.push
+                            (
+                              {
+                                Username:user[0].un,
+                                Date:new Date()
+                              }
+                            );
+                          }
+                          else
+                          {
+                            status.DeliveredTo[DeliveredToIndex].Date = new Date();
+                          }
+  
+                          status.save
+                          (
+                            function(err, status)
+                            {
+                              if(err) { console.error(err); }
+  
+                              resolve();
+                            }
+                          );
+                        }
+                      );
+                    });
+                    promisesArray.push(promise);
                   }
                 });
+
+                Promise.all(promisesArray).then
+                (
+                  function()
+                  {
+                    MessagesStatus.findOne
+                    (
+                      {ConversationID:ConversationID},
+                      function(err, status)
+                      {
+                        if(err) {console.error(err);}
+
+                        // socket.emit('messageStatus', {conversationID:ConversationID, status:status});
+
+                        recepients.forEach(recepient =>
+                        {
+                          let user = connections.filter
+                          (
+                            function(connectionElement)
+                            {
+                              return connectionElement.un == recepient;
+                            }
+                          );
+                          if(user.length > 0) // && user[0].un !== sender)
+                          {
+                            user[0].s.emit('messageStatus', {conversationID:ConversationID, status:status});
+                          }
+                        });
+                      }
+                    );
+                  }
+                );
               }
             }
           );
@@ -547,11 +669,151 @@ let ControllerFunctions =
       }
     );
   },
+  socketFetchMessages:function(socket, data)
+  {
+    let ConversationID = data.ConversationID;
+    let requester = connections.filter
+    (
+      function(connectionElement)
+      {
+        return connectionElement.s.id == socket.id;
+      }
+    );
+    let requesterUsername = requester[0].un;
+
+    Messages.findOne
+    (
+      {_id:ConversationID},
+      function(err, conversation)
+      {
+        if(err) { console.error(err); }
+
+        MessagesStatus.findOne
+        (
+          {ConversationID:ConversationID},
+          function(err, status)
+          {
+            if(err) { console.error(err); }
+
+            let DeliveredToIndex = status.DeliveredTo.findIndex(deliveredToObject => deliveredToObject.Username === requesterUsername);
+
+            if(DeliveredToIndex == -1)
+            {
+              status.DeliveredTo.push
+              (
+                {
+                  Username:requesterUsername,
+                  Date:new Date()
+                }
+              );
+            }
+            else
+            {
+              status.DeliveredTo[DeliveredToIndex].Date = new Date();
+            }
+
+            status.save
+            (
+              function(err, status)
+              {
+                if(err) { console.error(err); }
+
+                socket.emit('messages', {conversationID:ConversationID, messages:conversation});
+
+                conversation.AssociatedUsers.forEach(username =>
+                {
+                  let user = connections.filter
+                  (
+                    function(connectionElement)
+                    {
+                      return connectionElement.un == username;
+                    }
+                  );
+                  if(user.length > 0) // && user[0].un !== requesterUsername)
+                  {
+                    user[0].s.emit('messageStatus', {conversationID:ConversationID, status:status});
+                  }
+                });
+              }
+            );
+          }
+        );
+      }
+    );
+  },
+  socketSeen:function(socket, data)
+  {
+    let ConversationID = data.ConversationID;
+    let requester = connections.filter
+    (
+      function(connectionElement)
+      {
+        return connectionElement.s.id == socket.id;
+      }
+    );
+    let requesterUsername = requester[0].un;
+
+    MessagesStatus.findOne
+    (
+      {ConversationID:ConversationID},
+      function(err, status)
+      {
+        if(err) { console.error(err); }
+
+        let SeenByIndex = status.SeenBy.findIndex(MessageStatusObject => MessageStatusObject.Username === requesterUsername);
+
+        if(SeenByIndex == -1)
+        {
+          status.SeenBy.push
+          (
+            {
+              Username:requesterUsername,
+              Date:new Date()
+            }
+          );
+        }
+        else
+        {
+          status.SeenBy[SeenByIndex].Date = new Date();
+        }
+
+        status.save
+        (
+          function(err, status)
+          {
+            if(err) { console.error(err); }
+
+            Messages.findOne
+            (
+              {_id:ConversationID},
+              function(err, conversation)
+              {
+                if(err) { console.error(err); }
+
+                conversation.AssociatedUsers.forEach(username =>
+                {
+                  let user = connections.filter
+                  (
+                    function(connectionElement)
+                    {
+                      return connectionElement.un == username;
+                    }
+                  );
+                  if(user.length > 0) // && user[0].un !== requesterUsername)
+                  {
+                    user[0].s.emit('messageStatus', {conversationID:ConversationID, status:status});
+                  }
+                });
+              }
+            );
+          }
+        );
+      }
+    );
+  },
 
   createGroupChat:function(req, res)
   {
-    console.log(req.ConversationName);
-    console.log("^");
     let conversationName = req.ConversationName;
 
     let newRoom = new Messages
@@ -623,10 +885,6 @@ let ControllerFunctions =
         }
         else
         {
-          // console.log(conversation);
-          // console.log("^^^^^^^^^^^^^^^^^^^^^^^^^^");
-          // console.log(conversation._id);
-          // console.log(conversation.AssociatedUsers);
           UsersToAdd.forEach(user => conversation.AssociatedUsers.push(user));
           conversation.save
           (
@@ -1204,6 +1462,21 @@ let ControllerFunctions =
         }
         else
         {
+          let newMessagesStatus = new MessagesStatus
+          (
+            {
+              ConversationID:savedNewRoom._id
+            }
+          );
+
+          newMessagesStatus.save
+          (
+            function(err, savedMessagesStatus)
+            {
+              if(err) { console.error(err); }
+            }
+          );
+
           User.findOne //authenticated sockets should have access to users
           (
             {Username:sender},
@@ -1238,10 +1511,11 @@ let ControllerFunctions =
       }
     );
   },
-  socketAddUsersToChat:function(socket, data) //need to test
+  socketAddUsersToChat:function(socket, data)
   {
     let ConversationID = data.ConversationID;
-    let UsersToAdd = JSON.parse(data.UsersToAdd); //expected to be an array
+    // let UsersToAdd = JSON.parse(data.UsersToAdd); //expected to be an array
+    let UsersToAdd = data.UsersToAdd.split(",");
 
     Messages.findOne
     (
@@ -1256,6 +1530,7 @@ let ControllerFunctions =
         else
         {
           UsersToAdd.forEach(user => conversation.AssociatedUsers.push(user));
+          conversation.AssociatedUsers = [...new Set(conversation.AssociatedUsers)];
           conversation.save
           (
             function(err, savedConversation)

@@ -36,6 +36,10 @@ module.exports = function(io, OV)
 
       socket.on('newWaveMessageGroup', function(data){controller.socketNewWaveMessageGroup(socket, data);});
 
+      socket.on('fetchMessages', function(data){controller.socketFetchMessages(socket, data);});
+
+      socket.on('seen', function(data){controller.socketSeen(socket, data);});
+
       socket.on('callAndRing', function(data){controller.socketCallAndRing(socket, data, OV);});
 
       socket.on('leaveCall', function(data){controller.socketLeaveCall(socket, data, OV);});
