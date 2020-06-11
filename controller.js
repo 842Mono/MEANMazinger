@@ -349,7 +349,7 @@ let ControllerFunctions =
       }
     );
   },
-  socketSendMessage:function(socket, data) //(content, RecepientUsername, SenderUsername, next)
+  socketSendMessage:function(socket, data)
   {
     let content = data.Message;
     let contentType = data.ContentType; // enum "TextMessage", "ImageFileBase64".
@@ -397,7 +397,7 @@ let ControllerFunctions =
                 function(err, savedStatus)
                 {
                   if(err) {console.error(err);}
-                  socket.emit('messageStatus', {recepient:recepientUsername, conversationID:newConversation._id, status:savedStatus});
+                  socket.emit('messageStatus', {recipient:recepientUsername, conversationID:newConversation._id, status:savedStatus});
                 }
               )
             }
@@ -525,6 +525,7 @@ let ControllerFunctions =
   socketSendMessageGroup:function(socket, data)
   {
     let ConversationID = data.ConversationID;
+    let contentType = data.ContentType; // enum "TextMessage", "ImageFileBase64".
     let content = data.Message;
     let userSender = connections.filter
     (
@@ -538,7 +539,7 @@ let ControllerFunctions =
     let Message =
     {
       Timestamp:new Date(),
-      Type:"TextMessage",
+      Type:contentType,
       Content:content,
       Sender:sender
     };
@@ -582,7 +583,7 @@ let ControllerFunctions =
                   );
                   if(user.length > 0 && user[0].un !== sender)
                   {
-                    user[0].s.emit('newMessage',{sender:sender, message:content, conversationID:ConversationID});
+                    user[0].s.emit('newMessage',{sender:sender, message:content, contentType:contentType, conversationID:ConversationID});
                     console.log("\n\nServerEvent: Active Message!\n" + connections.length + " Authenticated.\n" + countTotalSockets + " Total.");
 
                     let promise = new Promise(function(resolve)
@@ -1080,7 +1081,7 @@ let ControllerFunctions =
                     return connectionElement.un == recepient;
                   }
                 );
-                if(user.length > 0 && user[0] !== sender)
+                if(user.length > 0 && user[0].un !== sender)
                 {
                   user[0].s.emit('ring',{ConversationID:ConversationID, videoCallStartTime:openviduMap[ConversationID].startTimestamp});
                   console.log("\n\nServerEvent: Ring!\n" + connections.length + " Authenticated.\n" + countTotalSockets + " Total.");
@@ -1233,9 +1234,9 @@ let ControllerFunctions =
                       return connectionElement.un == recepient;
                     }
                   );
-                  if(user.length > 0 && user[0] !== sender)
+                  if(user.length > 0) // && user[0] !== sender)
                   {
-                    user[0].s.emit('videoCallEnd',{ConversationID:ConversationID, videoCallEndTime:timestamp, videoCallDuration:duration});
+                    user[0].s.emit('videoCallEnd',{conversationID:ConversationID, videoCallEndTime:timestamp, videoCallDuration:duration});
                     console.log("\n\nServerEvent: Video Call end!\n" + connections.length + " Authenticated.\n" + countTotalSockets + " Total.");
                   }
                 });
@@ -1404,7 +1405,7 @@ let ControllerFunctions =
   // },
   socketNewWaveMessage:function(socket, data)
   {
-    let recepientUsername = data.Recepient;
+    let recepientUsername = data.Recipient;
 
     let userSender = connections.filter
     (
@@ -1602,7 +1603,7 @@ let ControllerFunctions =
         if(err)
         {
           console.error(err);
-          return socket.emit('err', "Error saving new chat room.");
+          return socket.emit('newRoomAcknowledgement', {success:false, msg:"Error saving new chat room."});
         }
         else
         {
@@ -1628,7 +1629,7 @@ let ControllerFunctions =
             {
               if(err)
               {
-                socket.emit('err', "Error retrieving user.");
+                socket.emit('newRoomAcknowledgement', {success:false, msg:"Error retrieving user."});
               }
               else
               {
@@ -1640,11 +1641,11 @@ let ControllerFunctions =
                     if(err)
                     {
                       console.log(err);
-                      return socket.emit('err', "Error saving room to user.");
+                      return socket.emit('newRoomAcknowledgement', {success:false, msg:"Error saving room to user."});
                     }
                     else
                     {
-                      return socket.emit('newRoomAcknowledgement', {msg:"New conversation saved.", conversationID:savedNewRoom._id});
+                      return socket.emit('newRoomAcknowledgement', {success:true, msg:"New conversation saved.", conversationID:savedNewRoom._id});
                     }
                   }
                 );
@@ -1669,7 +1670,7 @@ let ControllerFunctions =
         if(err)
         {
           console.error(err);
-          return socket.emit('err', "Error retrieving conversation.");
+          return socket.emit('addUsersToChatAcknowledgement', {success:false, msg:"Error retrieving conversation."});
         }
         else
         {
@@ -1682,11 +1683,11 @@ let ControllerFunctions =
               if(err)
               {
                 console.error(err);
-                return socket.emit('err', "Error saving conversation.");
+                return socket.emit('addUsersToChatAcknowledgement', {success:false, msg:"Error saving conversation."});
               }
               else
               {
-                return socket.emit('addUsersToChatAcknowledgement', "Conversation updated.");
+                return socket.emit('addUsersToChatAcknowledgement', {success:true, msg:"Conversation updated."});
               }
             }
           );
