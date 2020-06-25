@@ -33,15 +33,15 @@ module.exports = function(io, OV)
        * 
        * Required inputs:
        * @param {string} Message - Text message or base 64 image file.
-       * @param {string} contentType - Enum "TextMessage", "ImageFileBase64". The type of the message.
+       * @param {string} contentType - Enum "TextMessage", "ImageFileBase64", "WaveMessage". The type of the message.
        * @param {string} Recipient - The username of the user to send the message to.
        * 
        * Resulting emits:
        * 'newMessage'
        * Emit to the recipient.
        * @param {string} sender - The username of the user who sent the message.
-       * @param {string} message - The message. Either a text message or a base 64 image file.
-       * @param {string} type - Enum "TextMessage", "ImageFileBase64". The type of message.
+       * @param {string} message - The message. Either a text message, a wave message or a base 64 image file.
+       * @param {string} type - Enum "TextMessage", "ImageFileBase64", "WaveMessage". The type of message.
        * 
        * 'messageStatus'
        * Emit back to the requester.
@@ -97,15 +97,15 @@ module.exports = function(io, OV)
        * 
        * Required inputs:
        * @param {string} ConversationID - The conversation ID of the group chat to send the message to.
-       * @param {string} ContentType - Enum "TextMessage", "ImageFileBase64". The type of the message.
+       * @param {string} ContentType - Enum "TextMessage", "ImageFileBase64", "WaveMessage". The type of the message.
        * @param {string} Message - The text message or the image file.
        * 
        * Resulting emits:
        * 'newMessage'
        * Emit to all the users in the conversation except for the sender.
        * @param {string} sender - The user who sent the message.
-       * @param {string} message - The message. Either a text message or a base 64 image file.
-       * @param {string} contentType - Enum "TextMessage", "ImageFileBase64". The type of the message.
+       * @param {string} message - The message. Either a text message, a wave message or a base 64 image file.
+       * @param {string} contentType - Enum "TextMessage", "ImageFileBase64", "WaveMessage". The type of the message.
        * @param {string} conversationID - The conversation ID of the group chat.
        * 
        * 'messageStatus'
@@ -118,43 +118,6 @@ module.exports = function(io, OV)
        * An error message in case there was an error.
        */
       socket.on('newMessageGroup', function(data){controller.socketSendMessageGroup(socket, data);});
-
-      //TODO: merge with newMessage
-      /**
-       * Send a wave message.
-       * 
-       * Required inputs:
-       * @param {string} Recipient - The username of the user to send the wave message to.
-       * 
-       * Resulting emits:
-       * 'newWaveMessage'
-       * Emit to the recipient.
-       * @param {string} sender - The sender of the wave.
-       * 
-       * 'err'
-       * Emit back to the requester.
-       * An error message in case there was an error.
-       */
-      socket.on('newWaveMessage', function(data){controller.socketNewWaveMessage(socket, data);});
-
-      //TODO: merge with newMessageGroup
-      /**
-       * Send a wave message.
-       * 
-       * Required inputs:
-       * @param {string} ConversationID - The conversation ID of the group chat send the wave message to.
-       * 
-       * Resulting emits:
-       * 'newWaveMessage'
-       * Emit to the recipient.
-       * @param {string} sender - The sender of the wave.
-       * @param {string} conversationID - The conversation ID of the group chat.
-       * 
-       * 'err'
-       * Emit back to the requester.
-       * An error message in case there was an error.
-       */
-      socket.on('newWaveMessageGroup', function(data){controller.socketNewWaveMessageGroup(socket, data);});
 
       /**
        * An event to fetch the messages of a conversation.
@@ -225,6 +188,35 @@ module.exports = function(io, OV)
       socket.on('leaveCall', function(data){controller.socketLeaveCall(socket, data, OV);});
     
       // socket.on('newImage', function(data){controller.socketNewImage(socket, data);});
+    
+      /**
+       * Route to fetch friends and conversations of the user.
+       * 
+       * No required inputs.
+       * 
+       * Resulting emits:
+       * 'getFriendsAndConversations'
+       * Emit back to the requester.
+       * @param {boolean} success - Indicates whether the request was successful.
+       * @param {string} msg - Reason of failure if exists.
+       * @param {array} friends - An array of the usernames of the friends of the user.
+       * @param {array} conversations - An array of the conversation IDs of the conversations of the user.
+       */
+      socket.on('getFriendsAndConversations', function(data){controller.socketGetFriendsAndConversations(socket, data);});
+    
+      /**
+       * Route to add a friend to a user.
+       * 
+       * Required inputs:
+       * @param {string} FriendUsername - The username of the friend to be added.
+       * 
+       * Resulting emits:
+       * 'addFriend'
+       * Emit back to the requester.
+       * @param {boolean} success - Indicates whether the request was successful.
+       * @param {string} msg - The result of the request.
+       */
+      socket.on('addFriend', function(data){controller.socketAddFriend(socket, data);});
     }
   );
 }

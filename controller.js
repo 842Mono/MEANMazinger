@@ -133,97 +133,6 @@ let ControllerFunctions =
       }
     );
   },
-  fetchConversation:function(req,res)
-  {
-    if(!req.body.requiredUsername)
-      return res.json({success:false, msg:"Required username wasn't provided."});
-    let requesterUsername = req.user.Username; //"u1"; //req.user.Username;
-    let requiredUsername = req.body.requiredUsername;
-
-    Messages.findOne
-    (
-      {$or:[{Username1:requesterUsername, Username2:requiredUsername},{Username1:requiredUsername, Username2:requesterUsername}]},
-      function(err,conversation)
-      {
-        if(err)
-          console.log(err);
-        if(!conversation)
-          return res.json({success:false, msg:"Conversation Not Found"});
-        else
-        {
-          res.json({success:true, conversation:conversation});
-        }
-      }
-    );
-  },
-  sendMessage:function(req,res)
-  {
-    if(!req.body.RecepientUsername || !req.body.Content)
-      return res.json({success:false, msg:"Some input data is missing."});
-    let Username = req.user.Username; //"u1"; //req.user.Username;
-    let RecepientUsername = req.body.RecepientUsername;
-    let Message =
-    {
-      Timestamp:new Date(),
-      Type:"TextMessage",
-      Content:req.body.Content,
-      Sender:Username
-    };
-
-    Messages.findOne
-    (
-      {$or:[{Username1:Username, Username2:RecepientUsername},{Username1:RecepientUsername, Username2:Username}]},
-      function(err,conversation)
-      {
-        if(err)
-          console.log(err);
-        //if(Object.keys(conversation).length == 0)
-        if(!conversation)
-        {
-          let newConversation = new Messages
-          (
-            {
-              Username1:Username,
-              Username2:RecepientUsername,
-              Messages:[Message]
-            }
-          );
-          newConversation.save
-          (
-            function(err,savedConversation)
-            {
-              if(err)
-              {
-                console.log(err);
-                return res.json({success:false, msg:"Failed To Save New Conversation."});
-              }
-              else
-                return res.json({success:true, msg:"New Conversation Saved Successfully.", newConversation:savedConversation});
-              //
-            }
-          );
-        }
-        else
-        {
-          conversation.Messages.push(Message);
-          conversation.save
-          (
-            function(err,savedConversation)
-            {
-              if(err)
-              {
-                console.log(err);
-                return res.json({success:false, msg:"Failed To Save Message."});
-              }
-              else
-                return res.json({success:true, msg:"Message Saved Successfully.", newConversation:savedConversation});
-              //
-            }
-          );
-        }
-      }
-    );
-  },
   connectIncrementCountTotalSockets:function()
   {
     ++countTotalSockets;
@@ -352,7 +261,7 @@ let ControllerFunctions =
   socketSendMessage:function(socket, data)
   {
     let content = data.Message;
-    let contentType = data.ContentType; // enum "TextMessage", "ImageFileBase64".
+    let contentType = data.ContentType; // enum "TextMessage", "ImageFileBase64", "WaveMessage".
     let recepientUsername = data.Recipient; // fix spelling mistake to Recipient.
 
     let userSender = connections.filter
@@ -502,30 +411,10 @@ let ControllerFunctions =
     //   socket.emit("err", "Cannot find recepient.")
     // }
   },
-  // socketSendMessageGroupUsers:function(socket, data)
-  // {
-  //   let recepients = JSON.parse(recepients);
-
-  //   recepients.forEach(recepient =>
-  //   {
-  //     let user = connections.filter
-  //     (
-  //       function(connectionElement)
-  //       {
-  //         return connectionElement.un == recepient;
-  //       }
-  //     );
-  //     if(user.length > 0)
-  //     {
-  //       user[0].s.emit('changeConversation',{sender:data.sender});
-  //       console.log("\n\nServerEvent: Active Message!\n" + connections.length + " Authenticated.\n" + countTotalSockets + " Total.");
-  //     }
-  //   });
-  // },
   socketSendMessageGroup:function(socket, data)
   {
     let ConversationID = data.ConversationID;
-    let contentType = data.ContentType; // enum "TextMessage", "ImageFileBase64".
+    let contentType = data.ContentType; // enum "TextMessage", "ImageFileBase64", "WaveMessage".
     let content = data.Message;
     let userSender = connections.filter
     (
@@ -814,175 +703,6 @@ let ControllerFunctions =
     );
   },
 
-  createGroupChat:function(req, res)
-  {
-    let conversationName = req.ConversationName;
-
-    let newRoom = new Messages
-    (
-      {
-        ConversationName:conversationName,
-        AssociatedUsers:[req.user.Username]
-      }
-    );
-
-    newRoom.save
-    (
-      function(err, savedNewRoom)
-      {
-        if(err)
-        {
-          console.error(err);
-          return res.json({success:false, msg:"Error saving new chat room."});
-        }
-        else
-        {
-          // console.log(savedNewRoom);
-          // console.log(savedNewRoom._id);
-
-          // console.log("req.user:::::::::::::::::::::::::::::::");
-          // console.log(req.user);
-          // console.log("req.user.coIDs}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}");
-          // console.log(req.user.ConversationIDs);
-
-          req.user.ConversationIDs.push(savedNewRoom._id);
-          req.user.save
-          (
-            function(err, savedUser)
-            {
-              if(err)
-              {
-                console.log(err);
-                return res.json({success:false, msg:"Error saving room to user."});
-              }
-              else
-              {
-                // savedUser.ConversationIDs.forEach(id => {
-                //   console.log("an id here");
-                //   console.log(id);
-                // });
-                // console.log(savedUser.ConversationIDs);
-                return res.json({success:true, msg:"New conversation saved.", conversationID:savedNewRoom._id});
-              }
-            }
-          );
-        }
-      }
-    );
-  },
-  addUsersToChat:function(req,res)
-  {
-    let ConversationID = req.body.ConversationID;
-    let UsersToAdd = JSON.parse(req.body.UsersToAdd); //expected to be an array
-
-    Messages.findOne
-    (
-      {_id:ConversationID},
-      function(err, conversation)
-      {
-        if(err)
-        {
-          console.error(err);
-          return res.json({success:false, msg:"Error retrieving conversation."});
-        }
-        else
-        {
-          UsersToAdd.forEach(user => conversation.AssociatedUsers.push(user));
-          conversation.save
-          (
-            function(err, savedConversation)
-            {
-              if(err)
-              {
-                console.error(err);
-                return res.json({success:false, msg:"Error saving conversation."});
-              }
-              else
-              {
-                return res.json({success:true, msg:"Conversation updated.",});
-              }
-            }
-          );
-        }
-      }
-    );
-  },
-  sendMessageGroup:function(req,res)
-  {
-    if(!req.body.ConversationID || !req.body.Content)
-      return res.json({success:false, msg:"Some input data is missing."});
-    let Username = req.user.Username; //"u1"; //req.user.Username;
-    let ConversationID = req.body.ConversationID;
-    let Message =
-    {
-      Timestamp:new Date(),
-      Type:"TextMessage",
-      Content:req.body.Content,
-      Sender:Username
-    };
-
-    Messages.findOne
-    (
-      {_id:ConversationID},
-      function(err,conversation)
-      {
-        if(err)
-          console.log(err);
-
-        conversation.Messages.push(Message);
-        conversation.save
-        (
-          function(err,savedConversation)
-          {
-            if(err)
-            {
-              console.log(err);
-              return res.json({success:false, msg:"Failed To Save Message."});
-            }
-            else
-              return res.json({success:true, msg:"Message Saved Successfully.", newConversation:savedConversation});
-          }
-        );
-      }
-    );
-  },
-  // getRecepientsFromID(ConversationID, next) //asynchronous
-  // {
-    // Messages.findOne
-    // (
-    //   {_id:ConversationID},
-    //   function(err, conversation)
-    //   {
-    //     if(err)
-    //     {
-    //       console.error(err);
-    //     }
-    //     next(conversation.AssociatedUsers);
-    //   }
-    // );
-  // },
-  fetchConversationGroup:function(req,res)
-  {
-    let requesterUsername = req.user.Username; //"u1"; //req.user.Username;
-    let ConversationID = req.body.ConversationID;
-
-    Messages.findOne
-    (
-      {_id:ConversationID},
-      function(err,conversation)
-      {
-        if(err)
-          console.log(err);
-        if(!conversation)
-          return res.json({success:false, msg:"Conversation Not Found"});
-        else
-        {
-          res.json({success:true, conversation:conversation});
-        }
-      }
-    );
-  },
-
   addfriend:function(req,res)
   {
     let friendUsername = req.body.FriendUsername;
@@ -1004,7 +724,7 @@ let ControllerFunctions =
         if(err)
         {
           console.error(err);
-          return res.json({success:false, msg:"Error adding friend."});
+          return res.json({success:false, msg:"Error saving user."});
         }
         if(!savedUser)
         {
@@ -1017,9 +737,87 @@ let ControllerFunctions =
       }
     );
   },
+  socketAddFriend:function(socket, data)
+  {
+    let friendUsername = data.FriendUsername;
+
+    let userSender = connections.filter
+    (
+      function(connectionElement)
+      {
+        return connectionElement.s.id == socket.id;
+      }
+    );
+    let senderUsername = userSender[0].un;
+
+    User.findOne //authenticated sockets should have access to users
+    (
+      {Username:senderUsername},
+      function(err, User)
+      {
+        if(err)
+        {
+          socket.emit('addFriend', {success:false, msg:"Error retrieving user."});
+        }
+        else
+        {
+          if(User.Friends.includes(friendUsername))
+          {
+            socket.emit('addFriend', {success:false, msg:"Friend already exists."});
+          }
+          else
+          {
+            User.Friends.push(friendUsername);
+            User.save
+            (
+              function(err, savedUser)
+              {
+                if(err)
+                {
+                  console.error(err);
+                  socket.emit('addFriend', {success:false, msg:"Error saving user."});
+                }
+                else
+                {
+                  socket.emit('addFriend', {success:true, msg:"Friend added successfully."});
+                }
+              }
+            );
+          }
+        }
+      }
+    );
+  },
   getFriendsAndConversations:function(req,res)
   {
     return res.json({friends:req.user.Friends, conversations:req.user.ConversationIDs});
+  },
+  socketGetFriendsAndConversations:function(socket, data)
+  {
+    let userSender = connections.filter
+    (
+      function(connectionElement)
+      {
+        return connectionElement.s.id == socket.id;
+      }
+    );
+    let senderUsername = userSender[0].un;
+
+    User.findOne //authenticated sockets should have access to users
+    (
+      {Username:senderUsername},
+      function(err, User)
+      {
+        if(err)
+        {
+          socket.emit('getFriendsAndConversations', {success:false, msg:"Error retrieving user."});
+        }
+        else
+        {
+          socket.emit('getFriendsAndConversations', {success:true, friends:User.Friends, conversations:User.ConversationIDs});
+        }
+      }
+    );
   },
 
   socketCallAndRing:function(socket, data, OV)
@@ -1254,327 +1052,6 @@ let ControllerFunctions =
       console.log(msg);
       socket.emit('err', msg);
     }
-  },
-
-  // socketNewImage:function(socket, data)
-  // {
-  //   const content = data.Image;
-  //   let recepientUsername = data.Recipient; // fix spelling mistake to Recipient.
-
-  //   let userSender = connections.filter
-  //   (
-  //     function(connectionElement)
-  //     {
-  //       return connectionElement.s.id == socket.id;
-  //     }
-  //   );
-  //   let userRecepient = connections.filter
-  //   (
-  //     function(connectionElement)
-  //     {
-  //       return connectionElement.un == recepientUsername;
-  //     }
-  //   );
-
-  //   let next = function({success, msg, newConversation})
-  //   {
-  //     if(success)
-  //     {
-  //       if(userRecepient.length > 0)
-  //       {
-  //         userRecepient[0].s.emit('newMessage',{sender:userSender[0].un, message:content});
-
-  //         MessagesStatus.findOne
-  //         (
-  //           {ConversationID:newConversation._id},
-  //           function(err, status)
-  //           {
-  //             if(err) {console.error(err);}
-  //             status.DeliveredTo.push
-  //             (
-  //               {
-  //                 Username:recepientUsername,
-  //                 Date: new Date()
-  //               }
-  //             );
-
-  //             status.save
-  //             (
-  //               function(err, savedStatus)
-  //               {
-  //                 if(err) {console.error(err);}
-  //                 socket.emit('messageStatus', {recepient:recepientUsername, conversationID:newConversation._id, status:savedStatus});
-  //               }
-  //             )
-  //           }
-  //         );
-  //         console.log("\n\nServerEvent: Active Message!\n" + connections.length + " Authenticated.\n" + countTotalSockets + " Total.");
-  //       }
-  //       else
-  //       {
-  //         socket.emit('messageStatus', {recepient:recepientUsername, status:"Sent"});
-  //       }
-  //     }
-  //     else
-  //     {
-  //       console.log(msg);
-  //       socket.emit('err', msg);
-  //     }
-  //   }
-    
-  //   // if(userRecepient.length > 0)
-  //   // {
-  //   let Username = userSender[0].un;
-  //   let Message =
-  //   {
-  //     Timestamp:new Date(),
-  //     Type:"ImageFileBase64",
-  //     Content:content,
-  //     Sender:Username
-  //   };
-
-  //   Messages.findOne
-  //   (
-  //     {$or:[{Username1:Username, Username2:recepientUsername},{Username1:recepientUsername, Username2:Username}]},
-  //     function(err,conversation)
-  //     {
-  //       if(err)
-  //         console.log(err);
-  //       //if(Object.keys(conversation).length == 0)
-  //       if(!conversation)
-  //       {
-  //         let newConversation = new Messages
-  //         (
-  //           {
-  //             Username1:Username,
-  //             Username2:recepientUsername,
-  //             Messages:[Message]
-  //           }
-  //         );
-  //         newConversation.save
-  //         (
-  //           function(err,savedConversation)
-  //           {
-  //             if(err)
-  //             {
-  //               console.log(err);
-  //               next({success:false, msg:"Failed To Save New Conversation."});
-  //             }
-  //             else
-  //             {
-  //               let newMessagesStatus = new MessagesStatus
-  //               (
-  //                 {
-  //                   ConversationID:savedConversation._id
-  //                 }
-  //               );
-
-  //               newMessagesStatus.save
-  //               (
-  //                 function(err, savedMessagesStatus)
-  //                 {
-  //                   if(err) { console.error(err); }
-
-  //                   next({success:true, msg:"New Conversation Saved Successfully.", newConversation:savedConversation});
-  //                 }
-  //               );
-  //             }
-  //           }
-  //         );
-  //       }
-  //       else
-  //       {
-  //         conversation.Messages.push(Message);
-  //         conversation.save
-  //         (
-  //           function(err,savedConversation)
-  //           {
-  //             if(err)
-  //             {
-  //               console.log(err);
-  //               next({success:false, msg:"Failed To Save Message."});
-  //             }
-  //             else
-  //               next({success:true, msg:"Message Saved Successfully.", newConversation:savedConversation});
-  //             //
-  //           }
-  //         );
-  //       }
-  //     }
-  //   );
-  // },
-  socketNewWaveMessage:function(socket, data)
-  {
-    let recepientUsername = data.Recipient;
-
-    let userSender = connections.filter
-    (
-      function(connectionElement)
-      {
-        return connectionElement.s.id == socket.id;
-      }
-    );
-    let userRecepient = connections.filter
-    (
-      function(connectionElement)
-      {
-        return connectionElement.un == recepientUsername;
-      }
-    );
-
-    let next = function({success, msg})
-    {
-      if(success)
-      {
-        userRecepient[0].s.emit('newWaveMessage',{sender:userSender[0].un});
-        console.log("\n\nServerEvent: Wave Message!\n" + connections.length + " Authenticated.\n" + countTotalSockets + " Total.");
-      }
-      else
-      {
-        console.log(msg);
-        socket.emit('err', msg);
-      }
-    }
-    
-    if(userRecepient.length > 0)
-    {
-      let Username = userSender[0].un;
-      let Message =
-      {
-        Timestamp:new Date(),
-        Type:"WaveMessage",
-        Sender:Username
-      };
-
-      Messages.findOne
-      (
-        {$or:[{Username1:Username, Username2:recepientUsername},{Username1:recepientUsername, Username2:Username}]},
-        function(err,conversation)
-        {
-          if(err)
-            console.log(err);
-          //if(Object.keys(conversation).length == 0)
-          if(!conversation)
-          {
-            let newConversation = new Messages
-            (
-              {
-                Username1:Username,
-                Username2:recepientUsername,
-                Messages:[Message]
-              }
-            );
-            newConversation.save
-            (
-              function(err,savedConversation)
-              {
-                if(err)
-                {
-                  console.log(err);
-                  next({success:false, msg:"Failed To Save New Conversation."});
-                }
-                else
-                  next({success:true, msg:"New Conversation Saved Successfully.", newConversation:savedConversation});
-              }
-            );
-          }
-          else
-          {
-            conversation.Messages.push(Message);
-            conversation.save
-            (
-              function(err,savedConversation)
-              {
-                if(err)
-                {
-                  console.log(err);
-                  next({success:false, msg:"Failed To Save Message."});
-                }
-                else
-                  next({success:true, msg:"Message Saved Successfully.", newConversation:savedConversation});
-                //
-              }
-            );
-          }
-        }
-      );
-    }
-    else
-    {
-      socket.emit("error", "Cannot find recepient.")
-    }
-  },
-  socketNewWaveMessageGroup:function(socket, data)
-  {
-    let ConversationID = data.ConversationID;
-    let userSender = connections.filter
-    (
-      function(connectionElement)
-      {
-        return connectionElement.s.id == socket.id;
-      }
-    );
-    let sender = userSender[0].un;
-
-    let Message =
-    {
-      Timestamp:new Date(),
-      Type:"WaveMessage",
-      Sender:sender
-    };
-
-    Messages.findOne
-    (
-      {_id:ConversationID},
-      function(err, conversation)
-      {
-        if(err)
-        {
-          console.error(err);
-          socket.emit('err', "Error retrieving conversation.")
-        }
-        if(conversation)
-        {
-          conversation.Messages.push(Message);
-          conversation.save
-          (
-            function(err,savedConversation)
-            {
-              if(err)
-              {
-                console.log(err);
-                socket.emit('err', "Error saving conversation.");
-              }
-              else
-              {
-                let recepients = conversation.AssociatedUsers;
-  
-                recepients.forEach(recepient =>
-                {
-                  let user = connections.filter
-                  (
-                    function(connectionElement)
-                    {
-                      return connectionElement.un == recepient;
-                    }
-                  );
-                  if(user.length > 0 && user[0] !== sender)
-                  {
-                    user[0].s.emit('newWaveMessage',{sender:sender, conversationID:ConversationID});
-                    console.log("\n\nServerEvent: Wave Message!\n" + connections.length + " Authenticated.\n" + countTotalSockets + " Total.");
-                  }
-                });
-              }
-            }
-          );
-        }
-        else
-        {
-          console.log("Cannot find conversation.");
-          socket.emit('err', "Cannot find conversation");
-        }
-      }
-    );
   },
   socketCreateGroupChat:function(socket, data)
   {
